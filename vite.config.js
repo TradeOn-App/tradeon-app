@@ -36,13 +36,27 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
+            // Dados estáticos (moedas, redes) — cache mais longo
+            urlPattern: /^https?:\/\/.*\/api\/(currencies|networks)/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'api-static-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 600,
+              },
+            },
+          },
+          {
+            // Dados financeiros (dashboard, reports, transactions) — sempre busca da rede
             urlPattern: /^https?:\/\/.*\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'api-cache',
+              cacheName: 'api-data-cache',
+              networkTimeoutSeconds: 5,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 300,
+                maxAgeSeconds: 60,
               },
             },
           },
