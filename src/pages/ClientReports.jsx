@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Spinner, Table } from 'react-bootstrap';
-import { LuFileText, LuDownload } from 'react-icons/lu';
+import { LuFileText, LuDownload, LuSearch } from 'react-icons/lu';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
@@ -10,6 +10,7 @@ const monthNames = ['', 'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho
 export default function ClientReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     api.get('/client/reports')
@@ -31,6 +32,15 @@ export default function ClientReports() {
       });
   };
 
+  const filtered = reports.filter(r => {
+    if (!search.trim()) return true;
+    const term = search.toLowerCase();
+    return (
+      monthNames[r.month]?.toLowerCase().includes(term) ||
+      String(r.year).includes(term)
+    );
+  });
+
   if (loading) {
     return <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 400 }}><Spinner animation="border" className="spinner-gold" /></div>;
   }
@@ -40,6 +50,18 @@ export default function ClientReports() {
       <div className="page-header">
         <h4 className="page-title">Meus Relatorios</h4>
         <p className="page-subtitle">Acompanhe sua rentabilidade mensal</p>
+      </div>
+
+      <div className="filter-bar">
+        <div className="filter-search">
+          <LuSearch size={14} className="filter-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {reports.length === 0 ? (
@@ -53,7 +75,7 @@ export default function ClientReports() {
         <Card className="chart-card">
           <Card.Body className="p-0">
             <div className="table-responsive">
-              <Table className="table-dark table-hover align-middle mb-0">
+              <Table className="table-dark table-hover align-middle responsive-table">
                 <thead>
                   <tr>
                     <th>Periodo</th>
@@ -65,39 +87,45 @@ export default function ClientReports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.map(r => {
-                    const net = Number(r.total_deposits) - Number(r.total_withdrawals);
-                    return (
-                      <tr key={`${r.year}-${r.month}`}>
-                        <td>
-                          <Link to={`/reports/${r.year}/${r.month}`} className="text-decoration-none text-white fw-medium">
-                            <LuFileText size={14} className="text-gold me-2" />
-                            {monthNames[r.month]} / {r.year}
-                          </Link>
-                        </td>
-                        <td className="text-petrol fw-medium">{formatCurrency(r.total_deposits)}</td>
-                        <td style={{ color: '#e07060' }} className="fw-medium">{formatCurrency(r.total_withdrawals)}</td>
-                        <td className={net >= 0 ? 'text-gold fw-semibold' : 'fw-semibold'} style={net < 0 ? { color: '#e07060' } : {}}>
-                          {formatCurrency(net)}
-                        </td>
-                        <td>
-                          <span className={Number(r.profitability_percent) >= 0 ? 'badge-gold' : 'badge-withdrawal'}>
-                            {Number(r.profitability_percent).toFixed(2)}%
-                          </span>
-                        </td>
-                        <td>
-                          <div className="d-flex gap-1">
-                            <Link to={`/reports/${r.year}/${r.month}`} className="btn btn-outline-gold btn-sm">
-                              Detalhar
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center text-stone py-4">Nenhum relatorio encontrado.</td>
+                    </tr>
+                  ) : (
+                    filtered.map(r => {
+                      const net = Number(r.total_deposits) - Number(r.total_withdrawals);
+                      return (
+                        <tr key={`${r.year}-${r.month}`}>
+                          <td data-label="Período">
+                            <Link to={`/reports/${r.year}/${r.month}`} className="text-decoration-none text-white fw-medium">
+                              <LuFileText size={14} className="text-gold me-2" />
+                              {monthNames[r.month]} / {r.year}
                             </Link>
-                            <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.year, r.month)} title="Baixar PDF">
-                              <LuDownload size={13} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td data-label="Depósitos" className="text-petrol fw-medium">{formatCurrency(r.total_deposits)}</td>
+                          <td data-label="Saques" style={{ color: '#e07060' }} className="fw-medium">{formatCurrency(r.total_withdrawals)}</td>
+                          <td data-label="Líquido" className={net >= 0 ? 'text-gold fw-semibold' : 'fw-semibold'} style={net < 0 ? { color: '#e07060' } : {}}>
+                            {formatCurrency(net)}
+                          </td>
+                          <td data-label="Rentabilidade">
+                            <span className={Number(r.profitability_percent) >= 0 ? 'badge-gold' : 'badge-withdrawal'}>
+                              {Number(r.profitability_percent).toFixed(2)}%
+                            </span>
+                          </td>
+                          <td data-label="Ações" className="td-actions">
+                            <div className="d-flex gap-1">
+                              <Link to={`/reports/${r.year}/${r.month}`} className="btn btn-outline-gold btn-sm">
+                                Detalhar
+                              </Link>
+                              <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.year, r.month)} title="Baixar PDF">
+                                <LuDownload size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </Table>
             </div>

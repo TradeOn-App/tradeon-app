@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuTrash2, LuDownload } from 'react-icons/lu';
+import { LuPlus, LuTrash2, LuDownload, LuSearch } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -12,6 +12,7 @@ export default function AdminReports() {
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
   const [form, setForm] = useState({ client_id: '', month: '', year: '' });
+  const [search, setSearch] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -56,6 +57,11 @@ export default function AdminReports() {
       });
   };
 
+  const filtered = items.filter(r => {
+    if (search && !(r.client?.full_name || '').toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
   return (
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -66,13 +72,20 @@ export default function AdminReports() {
         <Button className="btn-gold" onClick={openGenerate}><LuPlus className="me-2" size={14} />Gerar Relatorio</Button>
       </div>
 
+      <div className="filter-bar">
+        <div className="filter-search">
+          <LuSearch size={14} className="filter-search-icon" />
+          <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+      </div>
+
       {loading ? (
         <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
       ) : (
         <Card className="chart-card">
           <Card.Body className="p-0">
             <div className="table-responsive">
-              <Table className="table-dark table-hover align-middle mb-0">
+              <Table className="table-dark table-hover align-middle responsive-table mb-0">
                 <thead>
                   <tr>
                     <th>Cliente</th>
@@ -85,19 +98,19 @@ export default function AdminReports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map(r => (
+                  {filtered.map(r => (
                     <tr key={r.id}>
-                      <td className="text-white fw-medium">{r.client?.full_name}</td>
-                      <td><span className="badge-gold">{monthNames[r.month]} / {r.year}</span></td>
-                      <td className="text-petrol fw-medium">{formatCurrency(r.total_deposits)}</td>
-                      <td style={{ color: '#e07060' }} className="fw-medium">{formatCurrency(r.total_withdrawals)}</td>
-                      <td>
+                      <td data-label="Cliente" className="text-white fw-medium">{r.client?.full_name}</td>
+                      <td data-label="Período"><span className="badge-gold">{monthNames[r.month]} / {r.year}</span></td>
+                      <td data-label="Depósitos" className="text-petrol fw-medium">{formatCurrency(r.total_deposits)}</td>
+                      <td data-label="Saques" style={{ color: '#e07060' }} className="fw-medium">{formatCurrency(r.total_withdrawals)}</td>
+                      <td data-label="Rentabilidade">
                         <span className={Number(r.profitability_percent) >= 0 ? 'text-gold fw-semibold' : 'fw-semibold'} style={Number(r.profitability_percent) < 0 ? { color: '#e07060' } : {}}>
                           {Number(r.profitability_percent).toFixed(2)}%
                         </span>
                       </td>
-                      <td className="text-stone">{r.generated_at ? new Date(r.generated_at).toLocaleDateString('pt-BR') : '-'}</td>
-                      <td>
+                      <td data-label="Gerado em" className="text-stone">{r.generated_at ? new Date(r.generated_at).toLocaleDateString('pt-BR') : '-'}</td>
+                      <td data-label="Ações" className="td-actions">
                         <div className="d-flex gap-1">
                           <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.id)} title="Baixar PDF">
                             <LuDownload size={13} />

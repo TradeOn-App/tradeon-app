@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuPencilLine, LuTrash2 } from 'react-icons/lu';
+import { LuPlus, LuPencilLine, LuTrash2, LuSearch } from 'react-icons/lu';
 import api from '../../services/api';
 
 export default function AdminCollaborators() {
@@ -10,6 +10,8 @@ export default function AdminCollaborators() {
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', cpf: '', wallet: '', commission_rule_id: '' });
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -50,6 +52,15 @@ export default function AdminCollaborators() {
     api.delete(`/admin/collaborators/${id}`).then(load);
   };
 
+  const filtered = items.filter(c => {
+    const term = search.toLowerCase();
+    const matchesSearch = !term ||
+      (c.name || '').toLowerCase().includes(term) ||
+      (c.cpf || '').toLowerCase().includes(term);
+    const matchesStatus = !statusFilter || String(c.is_active) === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -60,30 +71,47 @@ export default function AdminCollaborators() {
         <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Novo</Button>
       </div>
 
+      <div className="filter-bar">
+        <div className="filter-search">
+          <LuSearch size={14} className="filter-search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+        <select className="filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+          <option value="">Todos</option>
+          <option value="1">Ativo</option>
+          <option value="0">Inativo</option>
+        </select>
+      </div>
+
       {loading ? (
         <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
       ) : (
         <div className="table-responsive">
-          <Table className="table-dark table-hover align-middle">
+          <Table className="table-dark table-hover align-middle responsive-table">
             <thead>
               <tr>
                 <th>Nome</th>
                 <th>CPF</th>
                 <th>Wallet</th>
-                <th>Regra Comissao</th>
+                <th>Regra Comissão</th>
                 <th>Status</th>
-                <th>Acoes</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {items.map(c => (
+              {filtered.map(c => (
                 <tr key={c.id}>
-                  <td className="text-white fw-medium">{c.name}</td>
-                  <td><code className="text-gold">{c.cpf}</code></td>
-                  <td><code className="text-petrol d-inline-block text-truncate" style={{ maxWidth: 150 }}>{c.wallet || '-'}</code></td>
-                  <td>{c.commission_rule ? <span className="badge-gold">{c.commission_rule.name}</span> : <span className="text-stone">-</span>}</td>
-                  <td><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativo' : 'Inativo'}</span></td>
-                  <td>
+                  <td data-label="Nome" className="text-white fw-medium">{c.name}</td>
+                  <td data-label="CPF"><code className="text-gold">{c.cpf}</code></td>
+                  <td data-label="Wallet"><code className="text-petrol d-inline-block text-truncate" style={{ maxWidth: 150 }}>{c.wallet || '-'}</code></td>
+                  <td data-label="Regra Comissão">{c.commission_rule ? <span className="badge-gold">{c.commission_rule.name}</span> : <span className="text-stone">-</span>}</td>
+                  <td data-label="Status"><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativo' : 'Inativo'}</span></td>
+                  <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">
                       <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><LuPencilLine size={13} /></button>
                       <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={13} /></button>

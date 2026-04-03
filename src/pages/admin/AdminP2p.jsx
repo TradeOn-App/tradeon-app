@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuTrash2 } from 'react-icons/lu';
+import { LuPlus, LuTrash2, LuSearch } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -12,6 +12,8 @@ export default function AdminP2p() {
   const [currencies, setCurrencies] = useState([]);
   const [networks, setNetworks] = useState([]);
   const [form, setForm] = useState({ currency_id: '', network_id: '', amount: '', to_whom: '', reason: '', operation_date: '', reference: '' });
+  const [search, setSearch] = useState('');
+  const [filterCurrency, setFilterCurrency] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -43,6 +45,13 @@ export default function AdminP2p() {
     api.delete(`/admin/p2p-operations/${id}`).then(load);
   };
 
+  const filtered = items.filter(p => {
+    const searchLower = search.toLowerCase();
+    const matchesSearch = !search || (p.to_whom || '').toLowerCase().includes(searchLower) || (p.reason || '').toLowerCase().includes(searchLower);
+    const matchesCurrency = !filterCurrency || String(p.currency_id || p.currency?.id) === filterCurrency;
+    return matchesSearch && matchesCurrency;
+  });
+
   return (
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -53,11 +62,22 @@ export default function AdminP2p() {
         <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Operacao</Button>
       </div>
 
+      <div className="filter-bar">
+        <div className="filter-search">
+          <LuSearch size={14} className="filter-search-icon" />
+          <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className="filter-select" value={filterCurrency} onChange={e => setFilterCurrency(e.target.value)}>
+          <option value="">Todas</option>
+          {currencies.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
+        </select>
+      </div>
+
       {loading ? (
         <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
       ) : (
         <div className="table-responsive">
-          <Table className="table-dark table-hover align-middle">
+          <Table className="table-dark table-hover align-middle responsive-table">
             <thead>
               <tr>
                 <th>Data</th>
@@ -70,15 +90,15 @@ export default function AdminP2p() {
               </tr>
             </thead>
             <tbody>
-              {items.map(p => (
+              {filtered.map(p => (
                 <tr key={p.id}>
-                  <td>{p.operation_date}</td>
-                  <td className="text-white fw-medium">{p.to_whom}</td>
-                  <td className="text-gold fw-semibold">{formatCurrency(p.amount)}</td>
-                  <td><span className="badge-petrol">{p.currency?.code}</span></td>
-                  <td>{p.reason || '-'}</td>
-                  <td><code className="text-stone">{p.reference || '-'}</code></td>
-                  <td>
+                  <td data-label="Data">{p.operation_date}</td>
+                  <td data-label="Para" className="text-white fw-medium">{p.to_whom}</td>
+                  <td data-label="Valor" className="text-gold fw-semibold">{formatCurrency(p.amount)}</td>
+                  <td data-label="Moeda"><span className="badge-petrol">{p.currency?.code}</span></td>
+                  <td data-label="Motivo">{p.reason || '-'}</td>
+                  <td data-label="Referência"><code className="text-stone">{p.reference || '-'}</code></td>
+                  <td data-label="Ações" className="td-actions">
                     <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(p.id)}><LuTrash2 size={13} /></button>
                   </td>
                 </tr>

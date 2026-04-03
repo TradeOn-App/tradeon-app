@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuTrash2 } from 'react-icons/lu';
+import { LuPlus, LuTrash2, LuSearch } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -14,6 +14,8 @@ export default function AdminTransactions() {
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
   const [form, setForm] = useState({ client_id: '', type: 'deposit', amount: '', currency_id: '', network_id: '', description: '', transaction_date: '' });
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -47,6 +49,12 @@ export default function AdminTransactions() {
     api.delete(`/admin/client-transactions/${id}`).then(load);
   };
 
+  const filtered = items.filter(t => {
+    const matchesSearch = !search || (t.client?.full_name || '').toLowerCase().includes(search.toLowerCase());
+    const matchesType = !filterType || t.type === filterType;
+    return matchesSearch && matchesType;
+  });
+
   return (
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -57,11 +65,24 @@ export default function AdminTransactions() {
         <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Transacao</Button>
       </div>
 
+      <div className="filter-bar">
+        <div className="filter-search">
+          <LuSearch size={14} className="filter-search-icon" />
+          <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+          <option value="">Todos</option>
+          <option value="deposit">Aporte</option>
+          <option value="withdrawal">Saque</option>
+          <option value="allocation">Alocação</option>
+        </select>
+      </div>
+
       {loading ? (
         <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
       ) : (
         <div className="table-responsive">
-          <Table className="table-dark table-hover align-middle">
+          <Table className="table-dark table-hover align-middle responsive-table">
             <thead>
               <tr>
                 <th>Cliente</th>
@@ -73,21 +94,21 @@ export default function AdminTransactions() {
               </tr>
             </thead>
             <tbody>
-              {items.map(t => (
+              {filtered.map(t => (
                 <tr key={t.id}>
-                  <td className="text-white fw-medium">{t.client?.full_name}</td>
-                  <td>
+                  <td data-label="Cliente" className="text-white fw-medium">{t.client?.full_name}</td>
+                  <td data-label="Tipo">
                     <span className={t.type === 'deposit' ? 'badge-deposit' : t.type === 'withdrawal' ? 'badge-withdrawal' : 'badge-stone'}>
                       {typeMap[t.type] || t.type}
                     </span>
                   </td>
-                  <td className={t.type === 'deposit' ? 'text-petrol fw-semibold' : t.type === 'withdrawal' ? 'fw-semibold' : ''}
+                  <td data-label="Valor" className={t.type === 'deposit' ? 'text-petrol fw-semibold' : t.type === 'withdrawal' ? 'fw-semibold' : ''}
                       style={t.type === 'withdrawal' ? { color: '#e07060' } : {}}>
                     {formatCurrency(t.amount)}
                   </td>
-                  <td>{t.cash_flow_transaction?.currency?.code}</td>
-                  <td>{t.cash_flow_transaction?.transaction_date}</td>
-                  <td>
+                  <td data-label="Moeda">{t.cash_flow_transaction?.currency?.code}</td>
+                  <td data-label="Data">{t.cash_flow_transaction?.transaction_date}</td>
+                  <td data-label="Ações" className="td-actions">
                     <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(t.id)}><LuTrash2 size={13} /></button>
                   </td>
                 </tr>

@@ -12,6 +12,7 @@ export default function ReportMonth() {
   const { year, month } = useParams();
   const [data, setData] = useState({ report: null, transactions: [] });
   const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState('');
 
   useEffect(() => {
     api
@@ -55,6 +56,11 @@ export default function ReportMonth() {
   const { report, transactions } = data;
   const net = Number(report.total_deposits) - Number(report.total_withdrawals);
 
+  const filtered = transactions.filter(ct => {
+    if (!typeFilter) return true;
+    return ct.type === typeFilter;
+  });
+
   const cards = [
     { title: 'Total Depositos', value: formatCurrency(report.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
     { title: 'Total Saques', value: formatCurrency(report.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
@@ -95,11 +101,25 @@ export default function ReportMonth() {
           <div className="px-4 pt-4 pb-2">
             <h6 className="chart-title">Historico de Movimentacoes</h6>
           </div>
+          <div className="filter-bar">
+            <select
+              className="filter-select"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="deposit">Aporte</option>
+              <option value="withdrawal">Saque</option>
+              <option value="allocation">Alocação</option>
+            </select>
+          </div>
           {transactions.length === 0 ? (
             <p className="text-stone px-4 pb-4">Nenhuma movimentacao neste periodo.</p>
+          ) : filtered.length === 0 ? (
+            <p className="text-stone px-4 pb-4">Nenhuma movimentação encontrada.</p>
           ) : (
             <div className="table-responsive">
-              <Table className="table-dark table-hover align-middle mb-0">
+              <Table className="table-dark table-hover align-middle responsive-table">
                 <thead>
                   <tr>
                     <th>Tipo</th>
@@ -109,19 +129,19 @@ export default function ReportMonth() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((ct) => (
+                  {filtered.map((ct) => (
                     <tr key={ct.id}>
-                      <td>
+                      <td data-label="Tipo">
                         <span className={ct.type === 'deposit' ? 'badge-deposit' : ct.type === 'withdrawal' ? 'badge-withdrawal' : 'badge-stone'}>
                           {typeMap[ct.type] || ct.type}
                         </span>
                       </td>
-                      <td className={ct.type === 'deposit' ? 'text-petrol fw-semibold' : ct.type === 'withdrawal' ? 'fw-semibold' : ''}
+                      <td data-label="Valor" className={ct.type === 'deposit' ? 'text-petrol fw-semibold' : ct.type === 'withdrawal' ? 'fw-semibold' : ''}
                           style={ct.type === 'withdrawal' ? { color: '#e07060' } : {}}>
                         {formatCurrency(ct.amount)}
                       </td>
-                      <td>{ct.cash_flow_transaction?.currency?.code || '-'}</td>
-                      <td>{ct.cash_flow_transaction?.transaction_date || '-'}</td>
+                      <td data-label="Moeda">{ct.cash_flow_transaction?.currency?.code || '-'}</td>
+                      <td data-label="Data">{ct.cash_flow_transaction?.transaction_date || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

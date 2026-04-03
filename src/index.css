@@ -1177,3 +1177,143 @@ a:hover {
     to   { transform: translateY(0);    opacity: 1; }
   }
 }
+
+/* ── Filter Bar ── */
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.filter-search {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-search .filter-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--stone);
+  pointer-events: none;
+}
+
+.filter-search input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+}
+
+.filter-search input::placeholder {
+  color: var(--stone);
+}
+
+.filter-search input:focus {
+  outline: none;
+  border-color: var(--petrol-light);
+}
+
+.filter-select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  min-width: 140px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--petrol-light);
+}
+
+/* ── Responsive Table → Mobile Cards ── */
+
+@media (max-width: 768px) {
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .responsive-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .responsive-table tbody tr:hover {
+    background: var(--surface-hover) !important;
+  }
+
+  .responsive-table tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border: none !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    font-size: 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .responsive-table tbody td:last-child {
+    border-bottom: none !important;
+  }
+
+  .responsive-table tbody td::before {
+    content: attr(data-label);
+    color: var(--stone);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+
+  .responsive-table tbody td.td-actions {
+    justify-content: flex-end;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  .responsive-table tbody td.td-actions::before {
+    display: none;
+  }
+
+  /* Hide the outer table-responsive scroll wrapper borders */
+  .table-responsive {
+    border: none !important;
+  }
+
+  .responsive-table {
+    border: none !important;
+  }
+
+  .responsive-table tbody td .d-flex.gap-1 {
+    gap: 0.5rem !important;
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuPencilLine, LuTrash2 } from 'react-icons/lu';
+import { LuPlus, LuPencilLine, LuTrash2, LuSearch } from 'react-icons/lu';
 import api from '../../services/api';
 
 export default function AdminCommissionRules() {
@@ -9,6 +9,9 @@ export default function AdminCommissionRules() {
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', applicable_to: 'partner', type: 'percentage', value: '', description: '', valid_from: '', valid_until: '' });
+  const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   const load = () => {
     setLoading(true);
@@ -45,6 +48,14 @@ export default function AdminCommissionRules() {
     api.delete(`/admin/commission-rules/${id}`).then(load);
   };
 
+  const filtered = items.filter(c => {
+    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterType && c.type !== filterType) return false;
+    if (filterStatus === '1' && !c.is_active) return false;
+    if (filterStatus === '0' && c.is_active) return false;
+    return true;
+  });
+
   return (
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -55,11 +66,28 @@ export default function AdminCommissionRules() {
         <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Regra</Button>
       </div>
 
+      <div className="filter-bar">
+        <div className="filter-search">
+          <LuSearch size={14} className="filter-search-icon" />
+          <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+          <option value="">Todos</option>
+          <option value="percentage">Percentual</option>
+          <option value="fixed">Fixo</option>
+        </select>
+        <select className="filter-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+          <option value="">Todos</option>
+          <option value="1">Ativa</option>
+          <option value="0">Inativa</option>
+        </select>
+      </div>
+
       {loading ? (
         <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
       ) : (
         <div className="table-responsive">
-          <Table className="table-dark table-hover align-middle">
+          <Table className="table-dark table-hover align-middle responsive-table">
             <thead>
               <tr>
                 <th>Nome</th>
@@ -71,14 +99,14 @@ export default function AdminCommissionRules() {
               </tr>
             </thead>
             <tbody>
-              {items.map(c => (
+              {filtered.map(c => (
                 <tr key={c.id}>
-                  <td className="text-white fw-medium">{c.name}</td>
-                  <td><span className="badge-petrol">{c.applicable_to}</span></td>
-                  <td>{c.type === 'percentage' ? 'Percentual' : 'Fixo'}</td>
-                  <td className="text-gold fw-semibold">{c.type === 'percentage' ? `${c.value}%` : `R$ ${Number(c.value).toFixed(2)}`}</td>
-                  <td><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativa' : 'Inativa'}</span></td>
-                  <td>
+                  <td data-label="Nome" className="text-white fw-medium">{c.name}</td>
+                  <td data-label="Aplicável a"><span className="badge-petrol">{c.applicable_to}</span></td>
+                  <td data-label="Tipo">{c.type === 'percentage' ? 'Percentual' : 'Fixo'}</td>
+                  <td data-label="Valor" className="text-gold fw-semibold">{c.type === 'percentage' ? `${c.value}%` : `R$ ${Number(c.value).toFixed(2)}`}</td>
+                  <td data-label="Status"><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativa' : 'Inativa'}</span></td>
+                  <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">
                       <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><LuPencilLine size={13} /></button>
                       <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={13} /></button>
