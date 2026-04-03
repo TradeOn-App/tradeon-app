@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
-import { ArrowUpCircleFill, ArrowDownCircleFill, WalletFill, CashCoin } from 'react-bootstrap-icons';
+import { LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins } from 'react-icons/lu';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import api from '../services/api';
@@ -110,10 +110,10 @@ export default function ClientDashboard() {
   };
 
   const cards = [
-    { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <ArrowUpCircleFill size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <ArrowDownCircleFill size={22} />, iconClass: 'icon-danger' },
-    { title: 'Saldo', value: formatCurrency(data.cards.balance), icon: <WalletFill size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
-    { title: 'Transacoes', value: data.cards.transaction_count, icon: <CashCoin size={22} />, iconClass: 'icon-stone' },
+    { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
+    { title: 'Saldo', value: formatCurrency(data.cards.balance), icon: <LuWallet size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
+    { title: 'Transacoes', value: data.cards.transaction_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
   ];
 
   return (

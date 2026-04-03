@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { PlusLg, Trash, Download } from 'react-bootstrap-icons';
+import { LuPlus, LuTrash2, LuDownload } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -63,7 +63,7 @@ export default function AdminReports() {
           <h4 className="page-title mb-0">Relatorios</h4>
           <p className="page-subtitle mb-0">Relatorios mensais de clientes</p>
         </div>
-        <Button className="btn-gold" onClick={openGenerate}><PlusLg className="me-2" size={14} />Gerar Relatorio</Button>
+        <Button className="btn-gold" onClick={openGenerate}><LuPlus className="me-2" size={14} />Gerar Relatorio</Button>
       </div>
 
       {loading ? (
@@ -100,10 +100,10 @@ export default function AdminReports() {
                       <td>
                         <div className="d-flex gap-1">
                           <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.id)} title="Baixar PDF">
-                            <Download size={13} />
+                            <LuDownload size={13} />
                           </button>
                           <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(r.id)}>
-                            <Trash size={13} />
+                            <LuTrash2 size={13} />
                           </button>
                         </div>
                       </td>

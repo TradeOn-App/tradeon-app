@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { PlusLg, PencilSquare, Trash } from 'react-bootstrap-icons';
+import { LuPlus, LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import api from '../../services/api';
 
 export default function AdminCommissionRules() {
@@ -52,7 +52,7 @@ export default function AdminCommissionRules() {
           <h4 className="page-title mb-0">Regras de Comissao</h4>
           <p className="page-subtitle mb-0">Configurar regras de comissionamento</p>
         </div>
-        <Button className="btn-gold" onClick={openNew}><PlusLg className="me-2" size={14} />Nova Regra</Button>
+        <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Regra</Button>
       </div>
 
       {loading ? (
@@ -80,8 +80,8 @@ export default function AdminCommissionRules() {
                   <td><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativa' : 'Inativa'}</span></td>
                   <td>
                     <div className="d-flex gap-1">
-                      <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><PencilSquare size={13} /></button>
-                      <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><Trash size={13} /></button>
+                      <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><LuPencilLine size={13} /></button>
+                      <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={13} /></button>
                     </div>
                   </td>
                 </tr>

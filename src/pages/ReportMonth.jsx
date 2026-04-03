@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Row, Col, Table, Spinner } from 'react-bootstrap';
-import { ArrowLeft, Download, ArrowUpCircleFill, ArrowDownCircleFill, GraphUpArrow } from 'react-bootstrap-icons';
+import { LuArrowLeft, LuDownload, LuCircleArrowUp, LuCircleArrowDown, LuTrendingUp } from 'react-icons/lu';
 import api from '../services/api';
 
 const monthNames = ['', 'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -42,7 +42,7 @@ export default function ReportMonth() {
   if (!data.report) {
     return (
       <div className="page-container">
-        <Link to="/reports" className="back-link"><ArrowLeft size={14} className="me-1" /> Voltar</Link>
+        <Link to="/reports" className="back-link"><LuArrowLeft size={14} className="me-1" /> Voltar</Link>
         <Card className="chart-card">
           <Card.Body className="text-center py-5">
             <p className="text-stone mb-0">Relatorio nao encontrado.</p>
@@ -56,21 +56,21 @@ export default function ReportMonth() {
   const net = Number(report.total_deposits) - Number(report.total_withdrawals);
 
   const cards = [
-    { title: 'Total Depositos', value: formatCurrency(report.total_deposits), icon: <ArrowUpCircleFill size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Total Saques', value: formatCurrency(report.total_withdrawals), icon: <ArrowDownCircleFill size={22} />, iconClass: 'icon-danger' },
-    { title: 'Rentabilidade', value: `${Number(report.profitability_percent).toFixed(2)}%`, icon: <GraphUpArrow size={22} />, iconClass: 'icon-gold', valueClass: 'metric-value-gold' },
+    { title: 'Total Depositos', value: formatCurrency(report.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Total Saques', value: formatCurrency(report.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
+    { title: 'Rentabilidade', value: `${Number(report.profitability_percent).toFixed(2)}%`, icon: <LuTrendingUp size={22} />, iconClass: 'icon-gold', valueClass: 'metric-value-gold' },
   ];
 
   return (
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <Link to="/reports" className="back-link"><ArrowLeft size={14} className="me-1" /> Voltar aos relatorios</Link>
+          <Link to="/reports" className="back-link"><LuArrowLeft size={14} className="me-1" /> Voltar aos relatorios</Link>
           <h4 className="page-title mt-2">{monthNames[Number(month)]} / {year}</h4>
           <p className="page-subtitle">Detalhamento do periodo</p>
         </div>
         <button className="btn btn-gold" onClick={handleDownloadPdf}>
-          <Download size={14} className="me-2" />Baixar PDF
+          <LuDownload size={14} className="me-2" />Baixar PDF
         </button>
       </div>
 

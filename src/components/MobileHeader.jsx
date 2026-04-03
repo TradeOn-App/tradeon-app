@@ -1,4 +1,4 @@
-import { BoxArrowRight, HouseFill } from 'react-bootstrap-icons';
+import { LuLogOut, LuHouse } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,14 +14,14 @@ export default function MobileHeader() {
   return (
     <header className="mobile-header">
       <button className="mobile-header-home" onClick={() => navigate('/')}>
-        <HouseFill size={18} />
+        <LuHouse size={18} />
       </button>
       <div className="mobile-header-brand">
         <span className="mobile-header-brand-name">TradeOn</span>
         <span className="mobile-header-user">{user?.name}</span>
       </div>
       <button className="mobile-header-logout" onClick={handleLogout}>
-        <BoxArrowRight size={18} />
+        <LuLogOut size={18} />
       </button>
     </header>
   );

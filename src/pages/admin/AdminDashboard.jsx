@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
-import { PeopleFill, ArrowUpCircleFill, ArrowDownCircleFill, WalletFill, CashCoin, CurrencyExchange, Percent } from 'react-bootstrap-icons';
+import { LuUsers, LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins, LuArrowRightLeft, LuPercent } from 'react-icons/lu';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import api from '../../services/api';
@@ -26,14 +26,14 @@ export default function AdminDashboard() {
   if (!data) return null;
 
   const cards = [
-    { title: 'Clientes Ativos', value: data.cards.total_clients, icon: <PeopleFill size={22} />, iconClass: 'icon-gold' },
-    { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <ArrowUpCircleFill size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <ArrowDownCircleFill size={22} />, iconClass: 'icon-danger' },
-    { title: 'Saldo Geral', value: formatCurrency(data.cards.balance), icon: <WalletFill size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
-    { title: 'Volume P2P', value: formatCurrency(data.cards.total_p2p), icon: <CurrencyExchange size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Operacoes P2P', value: data.cards.p2p_count, icon: <CashCoin size={22} />, iconClass: 'icon-stone' },
-    { title: 'Total Comissoes', value: formatCurrency(data.cards.total_commissions), icon: <Percent size={22} />, iconClass: 'icon-gold' },
-    { title: 'Entradas Caixa', value: formatCurrency(data.cards.cash_flow_entries), icon: <ArrowUpCircleFill size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Clientes Ativos', value: data.cards.total_clients, icon: <LuUsers size={22} />, iconClass: 'icon-gold' },
+    { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
+    { title: 'Saldo Geral', value: formatCurrency(data.cards.balance), icon: <LuWallet size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
+    { title: 'Volume P2P', value: formatCurrency(data.cards.total_p2p), icon: <LuArrowRightLeft size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Operacoes P2P', value: data.cards.p2p_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
+    { title: 'Total Comissoes', value: formatCurrency(data.cards.total_commissions), icon: <LuPercent size={22} />, iconClass: 'icon-gold' },
+    { title: 'Entradas Caixa', value: formatCurrency(data.cards.cash_flow_entries), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
   ];
 
   const revenueChart = {

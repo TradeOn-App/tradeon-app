@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { PlusLg, Trash } from 'react-bootstrap-icons';
+import { LuPlus, LuTrash2 } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -50,7 +50,7 @@ export default function AdminP2p() {
           <h4 className="page-title mb-0">Operacoes P2P</h4>
           <p className="page-subtitle mb-0">Transferencias peer-to-peer</p>
         </div>
-        <Button className="btn-gold" onClick={openNew}><PlusLg className="me-2" size={14} />Nova Operacao</Button>
+        <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Operacao</Button>
       </div>
 
       {loading ? (
@@ -79,7 +79,7 @@ export default function AdminP2p() {
                   <td>{p.reason || '-'}</td>
                   <td><code className="text-stone">{p.reference || '-'}</code></td>
                   <td>
-                    <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(p.id)}><Trash size={13} /></button>
+                    <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(p.id)}><LuTrash2 size={13} /></button>
                   </td>
                 </tr>
               ))}

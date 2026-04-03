@@ -1,5 +1,5 @@
 import { Nav } from 'react-bootstrap';
-import { BarChartFill, FileEarmarkTextFill, BoxArrowRight, PeopleFill, PersonBadgeFill, CashCoin, ArrowLeftRight, Receipt, GraphUpArrow } from 'react-bootstrap-icons';
+import { LuChartBar, LuFileText, LuLogOut, LuUsers, LuUserCheck, LuCoins, LuArrowLeftRight, LuReceipt, LuTrendingUp } from 'react-icons/lu';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,18 +14,18 @@ export default function Sidebar() {
   };
 
   const adminLinks = [
-    { to: '/', icon: <BarChartFill size={18} />, label: 'Dashboard', end: true },
-    { to: '/admin/clients', icon: <PeopleFill size={18} />, label: 'Clientes' },
-    { to: '/admin/transactions', icon: <ArrowLeftRight size={18} />, label: 'Transações' },
-    { to: '/admin/collaborators', icon: <PersonBadgeFill size={18} />, label: 'Colaboradores' },
-    { to: '/admin/p2p', icon: <CashCoin size={18} />, label: 'P2P' },
-    { to: '/admin/commission-rules', icon: <Receipt size={18} />, label: 'Comissão' },
-    { to: '/admin/reports', icon: <FileEarmarkTextFill size={18} />, label: 'Relatórios' },
+    { to: '/', icon: <LuChartBar size={18} />, label: 'Dashboard', end: true },
+    { to: '/admin/clients', icon: <LuUsers size={18} />, label: 'Clientes' },
+    { to: '/admin/transactions', icon: <LuArrowLeftRight size={18} />, label: 'Transações' },
+    { to: '/admin/collaborators', icon: <LuUserCheck size={18} />, label: 'Colaboradores' },
+    { to: '/admin/p2p', icon: <LuCoins size={18} />, label: 'P2P' },
+    { to: '/admin/commission-rules', icon: <LuReceipt size={18} />, label: 'Comissão' },
+    { to: '/admin/reports', icon: <LuFileText size={18} />, label: 'Relatórios' },
   ];
 
   const clientLinks = [
-    { to: '/', icon: <GraphUpArrow size={18} />, label: 'Dashboard', end: true },
-    { to: '/reports', icon: <FileEarmarkTextFill size={18} />, label: 'Relatórios' },
+    { to: '/', icon: <LuTrendingUp size={18} />, label: 'Dashboard', end: true },
+    { to: '/reports', icon: <LuFileText size={18} />, label: 'Relatórios' },
   ];
 
   const links = isAdmin ? adminLinks : clientLinks;
@@ -43,35 +43,35 @@ export default function Sidebar() {
             <>
               <div className="sidebar-section-label">Principal</div>
               <Nav.Link as={NavLink} to="/" end className="sidebar-link">
-                <BarChartFill size={15} className="me-2" />
+                <LuChartBar size={15} className="me-2" />
                 <span className="link-text">Dashboard</span>
               </Nav.Link>
 
               <div className="sidebar-section-label">Gerenciar</div>
               <Nav.Link as={NavLink} to="/admin/clients" className="sidebar-link">
-                <PeopleFill size={15} className="me-2" />
+                <LuUsers size={15} className="me-2" />
                 <span className="link-text">Clientes</span>
               </Nav.Link>
               <Nav.Link as={NavLink} to="/admin/transactions" className="sidebar-link">
-                <ArrowLeftRight size={15} className="me-2" />
+                <LuArrowLeftRight size={15} className="me-2" />
                 <span className="link-text">Transações</span>
               </Nav.Link>
               <Nav.Link as={NavLink} to="/admin/collaborators" className="sidebar-link">
-                <PersonBadgeFill size={15} className="me-2" />
+                <LuUserCheck size={15} className="me-2" />
                 <span className="link-text">Colaboradores</span>
               </Nav.Link>
               <Nav.Link as={NavLink} to="/admin/p2p" className="sidebar-link">
-                <CashCoin size={15} className="me-2" />
+                <LuCoins size={15} className="me-2" />
                 <span className="link-text">Operações P2P</span>
               </Nav.Link>
 
               <div className="sidebar-section-label">Configurações</div>
               <Nav.Link as={NavLink} to="/admin/commission-rules" className="sidebar-link">
-                <Receipt size={15} className="me-2" />
+                <LuReceipt size={15} className="me-2" />
                 <span className="link-text">Regras Comissão</span>
               </Nav.Link>
               <Nav.Link as={NavLink} to="/admin/reports" className="sidebar-link">
-                <FileEarmarkTextFill size={15} className="me-2" />
+                <LuFileText size={15} className="me-2" />
                 <span className="link-text">Relatórios</span>
               </Nav.Link>
             </>
@@ -79,11 +79,11 @@ export default function Sidebar() {
             <>
               <div className="sidebar-section-label">Principal</div>
               <Nav.Link as={NavLink} to="/" end className="sidebar-link">
-                <GraphUpArrow size={15} className="me-2" />
+                <LuTrendingUp size={15} className="me-2" />
                 <span className="link-text">Dashboard</span>
               </Nav.Link>
               <Nav.Link as={NavLink} to="/reports" className="sidebar-link">
-                <FileEarmarkTextFill size={15} className="me-2" />
+                <LuFileText size={15} className="me-2" />
                 <span className="link-text">Relatórios</span>
               </Nav.Link>
             </>
@@ -92,7 +92,7 @@ export default function Sidebar() {
 
         <div className="sidebar-logout">
           <Nav.Link onClick={handleLogout} className="sidebar-link">
-            <BoxArrowRight size={15} className="me-2" />
+            <LuLogOut size={15} className="me-2" />
             <span className="link-text">Sair</span>
           </Nav.Link>
         </div>

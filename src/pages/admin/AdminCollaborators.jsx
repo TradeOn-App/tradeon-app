@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { PlusLg, PencilSquare, Trash } from 'react-bootstrap-icons';
+import { LuPlus, LuPencilLine, LuTrash2 } from 'react-icons/lu';
 import api from '../../services/api';
 
 export default function AdminCollaborators() {
@@ -57,7 +57,7 @@ export default function AdminCollaborators() {
           <h4 className="page-title mb-0">Colaboradores</h4>
           <p className="page-subtitle mb-0">Gerenciar colaboradores e comissoes</p>
         </div>
-        <Button className="btn-gold" onClick={openNew}><PlusLg className="me-2" size={14} />Novo</Button>
+        <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Novo</Button>
       </div>
 
       {loading ? (
@@ -85,8 +85,8 @@ export default function AdminCollaborators() {
                   <td><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativo' : 'Inativo'}</span></td>
                   <td>
                     <div className="d-flex gap-1">
-                      <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><PencilSquare size={13} /></button>
-                      <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><Trash size={13} /></button>
+                      <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><LuPencilLine size={13} /></button>
+                      <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={13} /></button>
                     </div>
                   </td>
                 </tr>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Spinner, Table } from 'react-bootstrap';
-import { FileEarmarkTextFill, Download } from 'react-bootstrap-icons';
+import { LuFileText, LuDownload } from 'react-icons/lu';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
@@ -45,7 +45,7 @@ export default function ClientReports() {
       {reports.length === 0 ? (
         <Card className="chart-card">
           <Card.Body className="text-center py-5">
-            <FileEarmarkTextFill size={40} className="text-stone mb-3" />
+            <LuFileText size={40} className="text-stone mb-3" />
             <p className="text-stone mb-0">Nenhum relatorio disponivel.</p>
           </Card.Body>
         </Card>
@@ -71,7 +71,7 @@ export default function ClientReports() {
                       <tr key={`${r.year}-${r.month}`}>
                         <td>
                           <Link to={`/reports/${r.year}/${r.month}`} className="text-decoration-none text-white fw-medium">
-                            <FileEarmarkTextFill size={14} className="text-gold me-2" />
+                            <LuFileText size={14} className="text-gold me-2" />
                             {monthNames[r.month]} / {r.year}
                           </Link>
                         </td>
@@ -91,7 +91,7 @@ export default function ClientReports() {
                               Detalhar
                             </Link>
                             <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.year, r.month)} title="Baixar PDF">
-                              <Download size={13} />
+                              <LuDownload size={13} />
                             </button>
                           </div>
                         </td>
