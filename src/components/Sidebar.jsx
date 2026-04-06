@@ -1,12 +1,22 @@
+import { useEffect } from 'react';
 import { Nav } from 'react-bootstrap';
 import { LuChartBar, LuFileText, LuLogOut, LuUsers, LuUserCheck, LuCoins, LuArrowLeftRight, LuReceipt, LuTrendingUp } from 'react-icons/lu';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSelectedClient } from '../hooks/useSelectedClient';
+import api from '../services/api';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const isAdmin = user?.role === 'admin';
+  const { selectedClientId, setSelectedClientId, clients, setClients } = useSelectedClient();
+
+  useEffect(() => {
+    if (isAdmin) {
+      api.get('/admin/clients?per_page=100').then(r => setClients(r.data.data));
+    }
+  }, [isAdmin]);
 
   const handleLogout = () => {
     logout();
@@ -37,6 +47,20 @@ export default function Sidebar() {
           <div className="brand-name">TradeOn</div>
           <div className="brand-subtitle">{user?.name}</div>
         </div>
+
+        {isAdmin && clients.length > 0 && (
+          <div className="px-3 mb-2">
+            <select
+              className="filter-select w-100"
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(e.target.value)}
+              style={{ fontSize: '0.8rem' }}
+            >
+              <option value="">Todos os Clientes</option>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+            </select>
+          </div>
+        )}
 
         <Nav className="flex-column flex-grow-1 px-0 mt-2">
           {isAdmin ? (

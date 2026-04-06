@@ -1,23 +1,57 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
-import { LuUsers, LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins, LuArrowRightLeft, LuPercent } from 'react-icons/lu';
+import { LuUsers, LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins, LuArrowRightLeft, LuPercent, LuTrendingUp } from 'react-icons/lu';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import api from '../../services/api';
+import { useSelectedClient } from '../../hooks/useSelectedClient';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmt = (d) => d.toISOString().split('T')[0];
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const { selectedClientId } = useSelectedClient();
+
+  const handlePeriod = (key) => {
+    setPeriod(key);
+    const now = new Date();
+    if (key === 'today') {
+      const d = fmt(now);
+      setDateFrom(d);
+      setDateTo(d);
+    } else if (key === 'week') {
+      const day = now.getDay();
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+      setDateFrom(fmt(monday));
+      setDateTo(fmt(now));
+    } else if (key === 'month') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      setDateFrom(fmt(first));
+      setDateTo(fmt(now));
+    } else {
+      setDateFrom('');
+      setDateTo('');
+    }
+  };
 
   useEffect(() => {
-    api.get('/admin/dashboard')
+    setLoading(true);
+    const params = {};
+    if (dateFrom) params.from = dateFrom;
+    if (dateTo) params.to = dateTo;
+    if (selectedClientId) params.client_id = selectedClientId;
+    api.get('/admin/dashboard', { params })
       .then(r => setData(r.data))
       .finally(() => setLoading(false));
-  }, []);
+  }, [dateFrom, dateTo, selectedClientId]);
 
   if (loading) {
     return <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 400 }}><Spinner animation="border" className="spinner-gold" /></div>;
@@ -30,6 +64,8 @@ export default function AdminDashboard() {
     { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
     { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
     { title: 'Saldo Geral', value: formatCurrency(data.cards.balance), icon: <LuWallet size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
+    { title: 'Lucro Total', value: formatCurrency(data.cards.total_profit), icon: <LuTrendingUp size={22} />, iconClass: 'icon-gold', valueClass: 'metric-value-gold' },
+    { title: 'Rentabilidade Média', value: data.cards.avg_profitability + '%', icon: <LuPercent size={22} />, iconClass: 'icon-petrol' },
     { title: 'Volume P2P', value: formatCurrency(data.cards.total_p2p), icon: <LuArrowRightLeft size={22} />, iconClass: 'icon-petrol' },
     { title: 'Operacoes P2P', value: data.cards.p2p_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
     { title: 'Total Comissoes', value: formatCurrency(data.cards.total_commissions), icon: <LuPercent size={22} />, iconClass: 'icon-gold' },
@@ -135,6 +171,30 @@ export default function AdminDashboard() {
       <div className="page-header">
         <h4 className="page-title">Dashboard <span className="page-title-petrol">Admin</span></h4>
         <p className="page-subtitle">Visao consolidada de todas as operacoes</p>
+      </div>
+
+      <div className="filter-bar align-items-center">
+        <div className="d-flex gap-2">
+          {[
+            { key: 'today', label: 'Hoje' },
+            { key: 'week', label: 'Semana' },
+            { key: 'month', label: 'Mês' },
+            { key: 'all', label: 'Todos' },
+          ].map(p => (
+            <button
+              key={p.key}
+              className={`btn btn-sm ${period === p.key ? 'btn-gold' : 'btn-outline-gold'}`}
+              onClick={() => handlePeriod(p.key)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+        <div className="d-flex gap-2 align-items-center">
+          <input type="date" className="filter-select" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPeriod('custom'); }} />
+          <span className="text-stone">até</span>
+          <input type="date" className="filter-select" value={dateTo} onChange={e => { setDateTo(e.target.value); setPeriod('custom'); }} />
+        </div>
       </div>
 
       <Row className="g-3 mb-4">

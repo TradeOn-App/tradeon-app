@@ -1,9 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuTrash2, LuSearch } from 'react-icons/lu';
+import { LuPlus, LuTrash2, LuSearch, LuPencilLine } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const fetchDollarQuotation = async (dateStr) => {
+  try {
+    if (dateStr) {
+      const d = dateStr.replace(/-/g, '');
+      const res = await fetch(`https://economia.awesomeapi.com.br/json/daily/USD-BRL/1?start_date=${d}&end_date=${d}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data[0].bid || '';
+    }
+    const res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL');
+    const data = await res.json();
+    return data.USDBRL?.bid || '';
+  } catch {
+    return '';
+  }
+};
+
+const emptyForm = { currency_id: '', network_id: '', amount: '', to_whom: '', reason: '', operation_date: '', reference: '', wallet_from: '', wallet_to: '', dollar_quotation: '' };
 
 export default function AdminP2p() {
   const [items, setItems] = useState([]);
@@ -11,7 +29,8 @@ export default function AdminP2p() {
   const [show, setShow] = useState(false);
   const [currencies, setCurrencies] = useState([]);
   const [networks, setNetworks] = useState([]);
-  const [form, setForm] = useState({ currency_id: '', network_id: '', amount: '', to_whom: '', reason: '', operation_date: '', reference: '' });
+  const [form, setForm] = useState(emptyForm);
+  const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [filterCurrency, setFilterCurrency] = useState('');
 
@@ -30,14 +49,46 @@ export default function AdminP2p() {
 
   useEffect(() => { load(); }, []);
 
-  const openNew = () => {
-    setForm({ currency_id: '', network_id: '', amount: '', to_whom: '', reason: '', operation_date: new Date().toISOString().split('T')[0], reference: '' });
+  const openNew = async () => {
+    setEditing(null);
+    const today = new Date().toISOString().split('T')[0];
+    const quotation = await fetchDollarQuotation(today);
+    setForm({ ...emptyForm, operation_date: today, dollar_quotation: quotation });
     setShow(true);
+  };
+
+  const openEdit = async (item) => {
+    setEditing(item);
+    const quotation = await fetchDollarQuotation(item.operation_date);
+    setForm({
+      currency_id: item.currency_id || item.currency?.id || '',
+      network_id: item.network_id || item.network?.id || '',
+      amount: item.amount || '',
+      to_whom: item.to_whom || '',
+      reason: item.reason || '',
+      operation_date: item.operation_date || '',
+      reference: item.reference || '',
+      wallet_from: item.wallet_from || '',
+      wallet_to: item.wallet_to || '',
+      dollar_quotation: item.dollar_quotation || quotation,
+    });
+    setShow(true);
+  };
+
+  const handleDateChange = async (dateValue) => {
+    setForm(f => ({ ...f, operation_date: dateValue }));
+    if (dateValue) {
+      const quotation = await fetchDollarQuotation(dateValue);
+      setForm(f => ({ ...f, dollar_quotation: quotation }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    api.post('/admin/p2p-operations', form).then(() => { setShow(false); load(); });
+    const request = editing
+      ? api.put(`/admin/p2p-operations/${editing.id}`, form)
+      : api.post('/admin/p2p-operations', form);
+    request.then(() => { setShow(false); load(); });
   };
 
   const handleDelete = (id) => {
@@ -85,7 +136,10 @@ export default function AdminP2p() {
                 <th>Valor</th>
                 <th>Moeda</th>
                 <th>Motivo</th>
-                <th>Referencia</th>
+                <th>Hash</th>
+                <th>Wallet Envio</th>
+                <th>Wallet Receb.</th>
+                <th>Cotação USD</th>
                 <th>Acoes</th>
               </tr>
             </thead>
@@ -97,8 +151,12 @@ export default function AdminP2p() {
                   <td data-label="Valor" className="text-gold fw-semibold">{formatCurrency(p.amount)}</td>
                   <td data-label="Moeda"><span className="badge-petrol">{p.currency?.code}</span></td>
                   <td data-label="Motivo">{p.reason || '-'}</td>
-                  <td data-label="Referência"><code className="text-stone">{p.reference || '-'}</code></td>
+                  <td data-label="Hash"><code className="text-stone">{p.reference || '-'}</code></td>
+                  <td data-label="Wallet Envio"><code className="text-stone">{p.wallet_from ? p.wallet_from.substring(0, 10) + '...' : '-'}</code></td>
+                  <td data-label="Wallet Receb."><code className="text-stone">{p.wallet_to ? p.wallet_to.substring(0, 10) + '...' : '-'}</code></td>
+                  <td data-label="Cotação USD">{p.dollar_quotation ? formatCurrency(p.dollar_quotation) : '-'}</td>
                   <td data-label="Ações" className="td-actions">
+                    <button className="btn btn-outline-gold btn-sm me-1" onClick={() => openEdit(p)}><LuPencilLine size={13} /></button>
                     <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(p.id)}><LuTrash2 size={13} /></button>
                   </td>
                 </tr>
@@ -110,7 +168,7 @@ export default function AdminP2p() {
 
       <Modal show={show} onHide={() => setShow(false)} centered contentClassName="bg-dark text-white">
         <Modal.Header closeButton closeVariant="white">
-          <Modal.Title>Nova Operacao P2P</Modal.Title>
+          <Modal.Title>{editing ? 'Editar Operação P2P' : 'Nova Operação P2P'}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
@@ -138,17 +196,31 @@ export default function AdminP2p() {
                 </Form.Select>
               </Form.Group>
             </div>
+            <div className="row mb-3">
+              <Form.Group className="col">
+                <Form.Label>Wallet de Envio</Form.Label>
+                <Form.Control value={form.wallet_from} onChange={e => setForm({ ...form, wallet_from: e.target.value })} className="bg-dark text-white border-secondary" />
+              </Form.Group>
+              <Form.Group className="col">
+                <Form.Label>Wallet de Recebimento</Form.Label>
+                <Form.Control value={form.wallet_to} onChange={e => setForm({ ...form, wallet_to: e.target.value })} className="bg-dark text-white border-secondary" />
+              </Form.Group>
+            </div>
             <Form.Group className="mb-3">
               <Form.Label>Motivo</Form.Label>
               <Form.Control value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} className="bg-dark text-white border-secondary" />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Data</Form.Label>
-              <Form.Control type="date" value={form.operation_date} onChange={e => setForm({ ...form, operation_date: e.target.value })} required className="bg-dark text-white border-secondary" />
+              <Form.Label>Data da Transação</Form.Label>
+              <Form.Control type="date" value={form.operation_date} onChange={e => handleDateChange(e.target.value)} required className="bg-dark text-white border-secondary" />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Referencia</Form.Label>
+              <Form.Label>Hash</Form.Label>
               <Form.Control value={form.reference} onChange={e => setForm({ ...form, reference: e.target.value })} className="bg-dark text-white border-secondary" />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Cotação Dólar</Form.Label>
+              <Form.Control type="number" step="0.01" value={form.dollar_quotation} onChange={e => setForm({ ...form, dollar_quotation: e.target.value })} className="bg-dark text-white border-secondary" />
             </Form.Group>
           </Modal.Body>
           <Modal.Footer className="border-secondary">

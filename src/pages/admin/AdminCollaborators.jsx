@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuPencilLine, LuTrash2, LuSearch } from 'react-icons/lu';
+import { LuPlus, LuPencilLine, LuTrash2, LuSearch, LuFileText } from 'react-icons/lu';
 import api from '../../services/api';
+
+const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function AdminCollaborators() {
   const [items, setItems] = useState([]);
@@ -12,6 +14,9 @@ export default function AdminCollaborators() {
   const [form, setForm] = useState({ name: '', cpf: '', wallet: '', commission_rule_id: '' });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [reportData, setReportData] = useState(null);
+  const [showReport, setShowReport] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -45,6 +50,15 @@ export default function AdminCollaborators() {
       ? api.put(`/admin/collaborators/${editing.id}`, payload)
       : api.post('/admin/collaborators', payload);
     req.then(() => { setShow(false); load(); });
+  };
+
+  const openReport = (collaborator) => {
+    setReportLoading(true);
+    setShowReport(true);
+    setReportData(null);
+    api.get(`/admin/collaborators/${collaborator.id}/report`)
+      .then(r => setReportData(r.data))
+      .finally(() => setReportLoading(false));
   };
 
   const handleDelete = (id) => {
@@ -113,6 +127,7 @@ export default function AdminCollaborators() {
                   <td data-label="Status"><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativo' : 'Inativo'}</span></td>
                   <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">
+                      <button className="btn btn-outline-gold btn-sm" onClick={() => openReport(c)} title="Relatório"><LuFileText size={13} /></button>
                       <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><LuPencilLine size={13} /></button>
                       <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={13} /></button>
                     </div>
@@ -155,6 +170,66 @@ export default function AdminCollaborators() {
             <Button className="btn-gold" type="submit">Salvar</Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      <Modal show={showReport} onHide={() => setShowReport(false)} centered size="lg" contentClassName="bg-dark text-white">
+        <Modal.Header closeButton closeVariant="white">
+          <Modal.Title>Relatório - {reportData?.collaborator?.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {reportLoading ? (
+            <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
+          ) : reportData ? (() => {
+            const summary = reportData.summary || {};
+            const profitColor = Number(summary.profit) >= 0 ? 'var(--petrol)' : 'var(--danger)';
+            const summaryCards = [
+              { label: 'Total Entradas', value: formatCurrency(summary.total_entries), color: 'var(--petrol)' },
+              { label: 'Total Saídas', value: formatCurrency(summary.total_exits), color: 'var(--danger)' },
+              { label: 'Total Comissão', value: formatCurrency(summary.total_commission), color: 'var(--gold)' },
+              { label: 'Lucro', value: formatCurrency(summary.profit), color: profitColor },
+              { label: '% Lucro', value: `${summary.profit_percent ?? 0}%`, color: profitColor },
+            ];
+            return (
+              <>
+                <div className="d-flex flex-wrap gap-3 mb-4">
+                  {summaryCards.map((card, i) => (
+                    <div key={i} className="flex-fill text-center p-3" style={{ background: 'var(--surface)', borderRadius: 10, minWidth: 120 }}>
+                      <div className="text-stone" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>{card.label}</div>
+                      <div className="fw-semibold mt-1" style={{ color: card.color, fontSize: '1.1rem' }}>{card.value}</div>
+                    </div>
+                  ))}
+                </div>
+                {reportData.transactions && reportData.transactions.length > 0 && (
+                  <div className="table-responsive">
+                    <Table className="table-dark table-hover align-middle" size="sm">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Tipo</th>
+                          <th>Valor</th>
+                          <th>Comissão</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reportData.transactions.map((t, i) => (
+                          <tr key={i}>
+                            <td>{t.date}</td>
+                            <td>{t.type}</td>
+                            <td>{formatCurrency(t.amount)}</td>
+                            <td>{formatCurrency(t.commission)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                )}
+              </>
+            );
+          })() : null}
+        </Modal.Body>
+        <Modal.Footer className="border-secondary">
+          <Button variant="secondary" onClick={() => setShowReport(false)}>Fechar</Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );
