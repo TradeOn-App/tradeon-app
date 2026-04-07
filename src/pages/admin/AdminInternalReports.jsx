@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuTrash2, LuSearch, LuDownload, LuAlertTriangle } from 'react-icons/lu';
+import { LuPlus, LuTrash2, LuSearch, LuDownload, LuTriangleAlert } from 'react-icons/lu';
 import api from '../../services/api';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -206,7 +206,7 @@ export default function AdminInternalReports() {
                         <td data-label="Lucro %">
                           <span className="fw-semibold d-inline-flex align-items-center gap-1" style={{ color: pctColor || 'var(--gold)' }}>
                             {pct.toFixed(2)}%
-                            {belowTarget && <LuAlertTriangle size={12} style={{ color: '#e0a830' }} title={`Abaixo da meta de ${PROFIT_TARGET}%`} />}
+                            {belowTarget && <LuTriangleAlert size={12} style={{ color: '#e0a830' }} title={`Abaixo da meta de ${PROFIT_TARGET}%`} />}
                           </span>
                         </td>
                         <td data-label="Comissão" className="text-gold fw-medium">{formatCurrency(r.commission_value)}</td>
