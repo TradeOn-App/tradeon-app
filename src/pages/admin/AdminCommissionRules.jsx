@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { LuPlus, LuPencilLine, LuTrash2, LuSearch } from 'react-icons/lu';
 import api from '../../services/api';
+import CurrencyInput from '../../components/CurrencyInput';
 
 export default function AdminCommissionRules() {
   const [items, setItems] = useState([]);
@@ -44,7 +45,7 @@ export default function AdminCommissionRules() {
   };
 
   const handleDelete = (id) => {
-    if (!window.confirm('Confirma exclusao?')) return;
+    if (!window.confirm('Confirma exclusão?')) return;
     api.delete(`/admin/commission-rules/${id}`).then(load);
   };
 
@@ -60,7 +61,7 @@ export default function AdminCommissionRules() {
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 className="page-title mb-0">Regras de Comissao</h4>
+          <h4 className="page-title mb-0">Regras de Comissão</h4>
           <p className="page-subtitle mb-0">Configurar regras de comissionamento</p>
         </div>
         <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Regra</Button>
@@ -91,11 +92,11 @@ export default function AdminCommissionRules() {
             <thead>
               <tr>
                 <th>Nome</th>
-                <th>Aplicavel a</th>
+                <th>Aplicável a</th>
                 <th>Tipo</th>
                 <th>Valor</th>
                 <th>Status</th>
-                <th>Acoes</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -131,7 +132,7 @@ export default function AdminCommissionRules() {
             </Form.Group>
             <div className="row mb-3">
               <Form.Group className="col">
-                <Form.Label>Aplicavel a</Form.Label>
+                <Form.Label>Aplicável a</Form.Label>
                 <Form.Select value={form.applicable_to} onChange={e => setForm({ ...form, applicable_to: e.target.value })} className="bg-dark text-white border-secondary">
                   <option value="partner">Partner</option>
                   <option value="admin">Admin</option>
@@ -147,10 +148,10 @@ export default function AdminCommissionRules() {
             </div>
             <Form.Group className="mb-3">
               <Form.Label>Valor</Form.Label>
-              <Form.Control type="number" step="0.01" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} required className="bg-dark text-white border-secondary" />
+              <CurrencyInput value={form.value} onChange={v => setForm({ ...form, value: v })} required className="bg-dark text-white border-secondary" prefix={form.type === 'percentage' ? '%' : 'R$'} />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Descricao</Form.Label>
+              <Form.Label>Descrição</Form.Label>
               <Form.Control as="textarea" rows={2} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-dark text-white border-secondary" />
             </Form.Group>
           </Modal.Body>

@@ -43,8 +43,8 @@ export default function OfflineIndicator() {
       boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
     }}>
       {isOnline
-        ? 'Conexao restabelecida'
-        : 'Sem conexao — os dados exibidos podem estar desatualizados'}
+        ? 'Conexão restabelecida'
+        : 'Sem conexão — os dados exibidos podem estar desatualizados'}
     </div>
   );
 }

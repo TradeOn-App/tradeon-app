@@ -202,6 +202,45 @@ a:hover {
   border-radius: 0 2px 2px 0;
 }
 
+/* ── Sidebar Submenu ── */
+
+.sidebar-submenu-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-link-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sidebar-link-toggle:hover {
+  background: var(--surface-hover);
+  color: var(--text) !important;
+}
+
+.sidebar-link-toggle.open {
+  color: var(--text) !important;
+}
+
+.submenu-chevron {
+  transition: transform 0.2s ease;
+}
+
+.submenu-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-sublink {
+  padding-left: 2.2rem !important;
+  font-size: 0.8rem !important;
+}
+
 .sidebar-logout {
   border-top: 1px solid var(--border);
   padding: 0.75rem 0.4rem;
@@ -251,6 +290,148 @@ a:hover {
   font-size: 0.85rem;
   color: var(--stone);
   margin-top: 0.25rem;
+}
+
+/* ── Dashboard Topbar ── */
+
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-topbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-topbar-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ── Client Selector Inline ── */
+
+.client-selector-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.client-selector-inline {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--petrol-bright);
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  padding: 0;
+  padding-right: 1.5rem;
+}
+
+.client-selector-inline:focus {
+  outline: none;
+}
+
+.client-selector-inline option {
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.client-selector-arrow {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--petrol-bright);
+  pointer-events: none;
+}
+
+/* ── Date Range Picker ── */
+
+.date-range-wrapper {
+  position: relative;
+}
+
+.date-range-toggle {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.date-range-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  min-width: 220px;
+}
+
+.date-range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-range-label {
+  font-size: 0.75rem;
+  color: var(--stone);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.date-range-input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.date-range-input:focus {
+  outline: none;
+  border-color: var(--petrol-light);
+}
+
+@media (max-width: 768px) {
+  .dashboard-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-topbar-right {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .dashboard-topbar-right .d-flex {
+    flex-wrap: wrap;
+  }
+
+  .client-selector-inline {
+    font-size: 1.2rem;
+  }
 }
 
 .metric-card {
@@ -1316,4 +1497,47 @@ a:hover {
   .responsive-table tbody td .d-flex.gap-1 {
     gap: 0.5rem !important;
   }
+}
+
+/* ── Bulk Selection Checkboxes ── */
+
+.bulk-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  background-color: transparent;
+  border: 1.5px solid var(--stone) !important;
+  border-radius: 3px !important;
+  vertical-align: middle;
+}
+
+.bulk-checkbox:checked {
+  background-color: var(--petrol-bright) !important;
+  border-color: var(--petrol-bright) !important;
+}
+
+.bulk-checkbox:focus {
+  box-shadow: 0 0 0 2px rgba(0, 179, 179, 0.25) !important;
+}
+
+.row-selected {
+  background-color: rgba(0, 179, 179, 0.08) !important;
+}
+
+/* ── Currency Input ── */
+
+.currency-input-wrapper {
+  position: relative;
+}
+
+.currency-input-prefix {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--stone);
+  font-size: 0.85rem;
+  font-weight: 500;
+  z-index: 1;
+  pointer-events: none;
 }

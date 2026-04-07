@@ -7,10 +7,11 @@ import ReportMonth from './pages/ReportMonth';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminClients from './pages/admin/AdminClients';
 import AdminCollaborators from './pages/admin/AdminCollaborators';
-import AdminCommissionRules from './pages/admin/AdminCommissionRules';
 import AdminTransactions from './pages/admin/AdminTransactions';
+import AdminInternalTransactions from './pages/admin/AdminInternalTransactions';
 import AdminP2p from './pages/admin/AdminP2p';
 import AdminReports from './pages/admin/AdminReports';
+import AdminInternalReports from './pages/admin/AdminInternalReports';
 import Layout from './components/Layout';
 
 function ProtectedRoute({ children }) {
@@ -47,10 +48,11 @@ export default function App() {
 
         <Route path="admin/clients" element={<AdminRoute><AdminClients /></AdminRoute>} />
         <Route path="admin/transactions" element={<AdminRoute><AdminTransactions /></AdminRoute>} />
+        <Route path="admin/internal-transactions" element={<AdminRoute><AdminInternalTransactions /></AdminRoute>} />
         <Route path="admin/collaborators" element={<AdminRoute><AdminCollaborators /></AdminRoute>} />
-        <Route path="admin/commission-rules" element={<AdminRoute><AdminCommissionRules /></AdminRoute>} />
-        <Route path="admin/p2p" element={<AdminRoute><AdminP2p /></AdminRoute>} />
+<Route path="admin/p2p" element={<AdminRoute><AdminP2p /></AdminRoute>} />
         <Route path="admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+        <Route path="admin/internal-reports" element={<AdminRoute><AdminInternalReports /></AdminRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

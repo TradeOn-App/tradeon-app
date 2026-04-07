@@ -8,7 +8,7 @@ export default function AdminClients() {
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ full_name: '', email: '', document: '', phone: '', notes: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', document: '', phone: '', notes: '', commission: '' });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -21,13 +21,13 @@ export default function AdminClients() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ full_name: '', email: '', document: '', phone: '', notes: '' });
+    setForm({ full_name: '', email: '', document: '', phone: '', notes: '', commission: '' });
     setShow(true);
   };
 
   const openEdit = (c) => {
     setEditing(c);
-    setForm({ full_name: c.full_name, email: c.user?.email || '', document: c.document, phone: c.phone || '', notes: c.notes || '' });
+    setForm({ full_name: c.full_name, email: c.user?.email || '', document: c.document, phone: c.phone || '', notes: c.notes || '', commission: c.commission ?? '' });
     setShow(true);
   };
 
@@ -40,7 +40,7 @@ export default function AdminClients() {
   };
 
   const handleDelete = (id) => {
-    if (!window.confirm('Confirma exclusao?')) return;
+    if (!window.confirm('Confirma exclusão?')) return;
     api.delete(`/admin/clients/${id}`).then(load);
   };
 
@@ -142,7 +142,11 @@ export default function AdminClients() {
               <Form.Control value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="bg-dark text-white border-secondary" />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Observacoes</Form.Label>
+              <Form.Label>Comissão (%)</Form.Label>
+              <Form.Control type="number" step="0.01" min="0" max="100" value={form.commission} onChange={e => setForm({ ...form, commission: e.target.value })} className="bg-dark text-white border-secondary" placeholder="Ex: 10.00" />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Observações</Form.Label>
               <Form.Control as="textarea" rows={2} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="bg-dark text-white border-secondary" />
             </Form.Group>
           </Modal.Body>

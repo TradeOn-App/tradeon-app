@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Nav } from 'react-bootstrap';
-import { LuChartBar, LuFileText, LuLogOut, LuUsers, LuUserCheck, LuCoins, LuArrowLeftRight, LuReceipt, LuTrendingUp } from 'react-icons/lu';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { LuChartBar, LuFileText, LuLogOut, LuUsers, LuUserCheck, LuCoins, LuArrowLeftRight, LuTrendingUp, LuChevronDown } from 'react-icons/lu';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useSelectedClient } from '../hooks/useSelectedClient';
 import api from '../services/api';
@@ -9,8 +9,15 @@ import api from '../services/api';
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isAdmin = user?.role === 'admin';
-  const { selectedClientId, setSelectedClientId, clients, setClients } = useSelectedClient();
+  const { setClients } = useSelectedClient();
+  const [transOpen, setTransOpen] = useState(
+    location.pathname.includes('/admin/transactions') || location.pathname.includes('/admin/internal-transactions')
+  );
+  const [reportsOpen, setReportsOpen] = useState(
+    location.pathname.includes('/admin/reports') || location.pathname.includes('/admin/internal-reports')
+  );
 
   useEffect(() => {
     if (isAdmin) {
@@ -26,11 +33,12 @@ export default function Sidebar() {
   const adminLinks = [
     { to: '/', icon: <LuChartBar size={18} />, label: 'Dashboard', end: true },
     { to: '/admin/clients', icon: <LuUsers size={18} />, label: 'Clientes' },
-    { to: '/admin/transactions', icon: <LuArrowLeftRight size={18} />, label: 'Transações' },
+    { to: '/admin/transactions', icon: <LuArrowLeftRight size={18} />, label: 'Externas' },
+    { to: '/admin/internal-transactions', icon: <LuArrowLeftRight size={18} />, label: 'Internas' },
     { to: '/admin/collaborators', icon: <LuUserCheck size={18} />, label: 'Colaboradores' },
     { to: '/admin/p2p', icon: <LuCoins size={18} />, label: 'P2P' },
-    { to: '/admin/commission-rules', icon: <LuReceipt size={18} />, label: 'Comissão' },
-    { to: '/admin/reports', icon: <LuFileText size={18} />, label: 'Relatórios' },
+    { to: '/admin/reports', icon: <LuFileText size={18} />, label: 'Rel. Externos' },
+    { to: '/admin/internal-reports', icon: <LuFileText size={18} />, label: 'Rel. Internos' },
   ];
 
   const clientLinks = [
@@ -48,20 +56,6 @@ export default function Sidebar() {
           <div className="brand-subtitle">{user?.name}</div>
         </div>
 
-        {isAdmin && clients.length > 0 && (
-          <div className="px-3 mb-2">
-            <select
-              className="filter-select w-100"
-              value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
-              style={{ fontSize: '0.8rem' }}
-            >
-              <option value="">Todos os Clientes</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
-            </select>
-          </div>
-        )}
-
         <Nav className="flex-column flex-grow-1 px-0 mt-2">
           {isAdmin ? (
             <>
@@ -76,10 +70,23 @@ export default function Sidebar() {
                 <LuUsers size={15} className="me-2" />
                 <span className="link-text">Clientes</span>
               </Nav.Link>
-              <Nav.Link as={NavLink} to="/admin/transactions" className="sidebar-link">
-                <LuArrowLeftRight size={15} className="me-2" />
-                <span className="link-text">Transações</span>
-              </Nav.Link>
+              <div className="sidebar-submenu-group">
+                <div className={`sidebar-link sidebar-link-toggle ${transOpen ? 'open' : ''}`} onClick={() => setTransOpen(!transOpen)}>
+                  <LuArrowLeftRight size={15} className="me-2" />
+                  <span className="link-text">Transações</span>
+                  <LuChevronDown size={13} className={`ms-auto submenu-chevron ${transOpen ? 'rotated' : ''}`} />
+                </div>
+                {transOpen && (
+                  <div className="sidebar-submenu">
+                    <Nav.Link as={NavLink} to="/admin/transactions" className="sidebar-link sidebar-sublink">
+                      <span className="link-text">Externas</span>
+                    </Nav.Link>
+                    <Nav.Link as={NavLink} to="/admin/internal-transactions" className="sidebar-link sidebar-sublink">
+                      <span className="link-text">Internas</span>
+                    </Nav.Link>
+                  </div>
+                )}
+              </div>
               <Nav.Link as={NavLink} to="/admin/collaborators" className="sidebar-link">
                 <LuUserCheck size={15} className="me-2" />
                 <span className="link-text">Colaboradores</span>
@@ -90,14 +97,23 @@ export default function Sidebar() {
               </Nav.Link>
 
               <div className="sidebar-section-label">Configurações</div>
-              <Nav.Link as={NavLink} to="/admin/commission-rules" className="sidebar-link">
-                <LuReceipt size={15} className="me-2" />
-                <span className="link-text">Regras Comissão</span>
-              </Nav.Link>
-              <Nav.Link as={NavLink} to="/admin/reports" className="sidebar-link">
-                <LuFileText size={15} className="me-2" />
-                <span className="link-text">Relatórios</span>
-              </Nav.Link>
+              <div className="sidebar-submenu-group">
+                <div className={`sidebar-link sidebar-link-toggle ${reportsOpen ? 'open' : ''}`} onClick={() => setReportsOpen(!reportsOpen)}>
+                  <LuFileText size={15} className="me-2" />
+                  <span className="link-text">Relatórios</span>
+                  <LuChevronDown size={13} className={`ms-auto submenu-chevron ${reportsOpen ? 'rotated' : ''}`} />
+                </div>
+                {reportsOpen && (
+                  <div className="sidebar-submenu">
+                    <Nav.Link as={NavLink} to="/admin/reports" className="sidebar-link sidebar-sublink">
+                      <span className="link-text">Externos</span>
+                    </Nav.Link>
+                    <Nav.Link as={NavLink} to="/admin/internal-reports" className="sidebar-link sidebar-sublink">
+                      <span className="link-text">Internos</span>
+                    </Nav.Link>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <>

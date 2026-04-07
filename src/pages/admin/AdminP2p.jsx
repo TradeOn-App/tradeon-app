@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { LuPlus, LuTrash2, LuSearch, LuPencilLine } from 'react-icons/lu';
 import api from '../../services/api';
+import CurrencyInput from '../../components/CurrencyInput';
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatUSD = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const fetchDollarQuotation = async (dateStr) => {
   try {
@@ -33,6 +35,8 @@ export default function AdminP2p() {
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
   const [filterCurrency, setFilterCurrency] = useState('');
+  const [selected, setSelected] = useState(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -92,8 +96,34 @@ export default function AdminP2p() {
   };
 
   const handleDelete = (id) => {
-    if (!window.confirm('Confirma exclusao?')) return;
+    if (!window.confirm('Confirma exclusão?')) return;
     api.delete(`/admin/p2p-operations/${id}`).then(load);
+  };
+
+  const toggleSelect = (id) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === filtered.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map(p => p.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!selected.size) return;
+    if (!window.confirm(`Confirma exclusão de ${selected.size} item(ns)?`)) return;
+    setDeleting(true);
+    await Promise.all([...selected].map(id => api.delete(`/admin/p2p-operations/${id}`)));
+    setSelected(new Set());
+    setDeleting(false);
+    load();
   };
 
   const filtered = items.filter(p => {
@@ -107,10 +137,10 @@ export default function AdminP2p() {
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 className="page-title mb-0">Operacoes P2P</h4>
-          <p className="page-subtitle mb-0">Transferencias peer-to-peer</p>
+          <h4 className="page-title mb-0">Operações P2P</h4>
+          <p className="page-subtitle mb-0">Transferências peer-to-peer</p>
         </div>
-        <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Operacao</Button>
+        <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Operação</Button>
       </div>
 
       <div className="filter-bar">
@@ -122,6 +152,12 @@ export default function AdminP2p() {
           <option value="">Todas</option>
           {currencies.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
         </select>
+        {selected.size > 0 && (
+          <button className="btn btn-sm btn-outline-danger-custom d-flex align-items-center gap-1" onClick={handleDeleteSelected} disabled={deleting}>
+            <LuTrash2 size={13} />
+            Excluir {selected.size} selecionado(s)
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -131,6 +167,9 @@ export default function AdminP2p() {
           <Table className="table-dark table-hover align-middle responsive-table">
             <thead>
               <tr>
+                <th style={{ width: 40 }}>
+                  <input type="checkbox" className="form-check-input bulk-checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleSelectAll} />
+                </th>
                 <th>Data</th>
                 <th>Para</th>
                 <th>Valor</th>
@@ -140,12 +179,15 @@ export default function AdminP2p() {
                 <th>Wallet Envio</th>
                 <th>Wallet Receb.</th>
                 <th>Cotação USD</th>
-                <th>Acoes</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(p => (
-                <tr key={p.id}>
+                <tr key={p.id} className={selected.has(p.id) ? 'row-selected' : ''}>
+                  <td>
+                    <input type="checkbox" className="form-check-input bulk-checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} />
+                  </td>
                   <td data-label="Data">{p.operation_date}</td>
                   <td data-label="Para" className="text-white fw-medium">{p.to_whom}</td>
                   <td data-label="Valor" className="text-gold fw-semibold">{formatCurrency(p.amount)}</td>
@@ -154,7 +196,7 @@ export default function AdminP2p() {
                   <td data-label="Hash"><code className="text-stone">{p.reference || '-'}</code></td>
                   <td data-label="Wallet Envio"><code className="text-stone">{p.wallet_from ? p.wallet_from.substring(0, 10) + '...' : '-'}</code></td>
                   <td data-label="Wallet Receb."><code className="text-stone">{p.wallet_to ? p.wallet_to.substring(0, 10) + '...' : '-'}</code></td>
-                  <td data-label="Cotação USD">{p.dollar_quotation ? formatCurrency(p.dollar_quotation) : '-'}</td>
+                  <td data-label="Cotação USD">{p.dollar_quotation ? formatUSD(p.dollar_quotation) : '-'}</td>
                   <td data-label="Ações" className="td-actions">
                     <button className="btn btn-outline-gold btn-sm me-1" onClick={() => openEdit(p)}><LuPencilLine size={13} /></button>
                     <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(p.id)}><LuTrash2 size={13} /></button>
@@ -178,7 +220,7 @@ export default function AdminP2p() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Valor</Form.Label>
-              <Form.Control type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required className="bg-dark text-white border-secondary" />
+              <CurrencyInput value={form.amount} onChange={v => setForm({ ...form, amount: v })} required className="bg-dark text-white border-secondary" />
             </Form.Group>
             <div className="row mb-3">
               <Form.Group className="col">
@@ -220,7 +262,7 @@ export default function AdminP2p() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Cotação Dólar</Form.Label>
-              <Form.Control type="number" step="0.01" value={form.dollar_quotation} onChange={e => setForm({ ...form, dollar_quotation: e.target.value })} className="bg-dark text-white border-secondary" />
+              <CurrencyInput value={form.dollar_quotation} onChange={v => setForm({ ...form, dollar_quotation: v })} className="bg-dark text-white border-secondary" prefix="$" />
             </Form.Group>
           </Modal.Body>
           <Modal.Footer className="border-secondary">

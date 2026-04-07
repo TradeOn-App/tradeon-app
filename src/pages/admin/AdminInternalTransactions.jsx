@@ -6,7 +6,7 @@ import CurrencyInput from '../../components/CurrencyInput';
 
 const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const formatUSD = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const typeMap = { deposit: 'Valor Inicial', withdrawal: 'Saque', updated_value: 'Valor Atualizado', contribution: 'Aporte' };
+const typeMap = { initial_value: 'Valor Inicial', updated_value: 'Valor Atualizado', deposit: 'Aporte', withdrawal: 'Retirada', commission_withdrawal: 'Saque Comissão', client_withdrawal: 'Saque Cliente' };
 
 const fetchDollarQuotation = async (dateStr) => {
   try {
@@ -24,15 +24,18 @@ const fetchDollarQuotation = async (dateStr) => {
   }
 };
 
-export default function AdminTransactions() {
+export default function AdminInternalTransactions() {
   const [items, setItems] = useState([]);
-  const [clients, setClients] = useState([]);
+  const [collaborators, setCollaborators] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const [networks, setNetworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ client_id: '', type: 'deposit', amount: '', initial_debit: '', reference_month: '', reference_year: '', currency_id: '', network_id: '', description: '', transaction_date: '', quotation: '', receipt: null });
+  const [form, setForm] = useState({
+    collaborator_id: '', type: 'deposit', amount: '', currency_id: '', network_id: '',
+    transaction_date: '', quotation_at_transaction: '', wallet_destination: '', tx_hash: '', description: '',
+  });
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('');
   const [selected, setSelected] = useState(new Set());
@@ -41,13 +44,13 @@ export default function AdminTransactions() {
   const load = () => {
     setLoading(true);
     Promise.all([
-      api.get('/admin/client-transactions?per_page=50'),
-      api.get('/admin/clients?per_page=100'),
+      api.get('/admin/internal-transactions?per_page=50'),
+      api.get('/admin/collaborators?per_page=100'),
       api.get('/admin/currencies'),
       api.get('/admin/networks'),
     ]).then(([r1, r2, r3, r4]) => {
       setItems(r1.data.data);
-      setClients(r2.data.data);
+      setCollaborators(r2.data.data);
       setCurrencies(r3.data);
       setNetworks(r4.data);
     }).finally(() => setLoading(false));
@@ -55,29 +58,40 @@ export default function AdminTransactions() {
 
   useEffect(() => { load(); }, []);
 
+  // Set USDT as default currency when currencies load
+  useEffect(() => {
+    if (currencies.length > 0 && !form.currency_id) {
+      const usdt = currencies.find(c => c.code === 'USDT');
+      if (usdt) setForm(f => ({ ...f, currency_id: String(usdt.id) }));
+    }
+  }, [currencies]);
+
   const openNew = async () => {
     setEditing(null);
     const today = new Date().toISOString().split('T')[0];
     const quotation = await fetchDollarQuotation(today);
-    setForm({ client_id: '', type: 'deposit', amount: '', initial_debit: '', reference_month: '', reference_year: '', currency_id: '', network_id: '', description: '', transaction_date: today, quotation, receipt: null });
+    const usdt = currencies.find(c => c.code === 'USDT');
+    setForm({
+      collaborator_id: '', type: 'deposit', amount: '', currency_id: usdt ? String(usdt.id) : '',
+      network_id: '', transaction_date: today, quotation_at_transaction: quotation,
+      wallet_destination: '', tx_hash: '', description: '',
+    });
     setShow(true);
   };
 
   const openEdit = (t) => {
     setEditing(t);
     setForm({
-      client_id: t.client_id || t.client?.id || '',
+      collaborator_id: t.collaborator_id || '',
       type: t.type || 'deposit',
       amount: t.amount || '',
-      initial_debit: t.initial_debit || '',
-      reference_month: t.reference_month || '',
-      reference_year: t.reference_year || '',
-      currency_id: t.cash_flow_transaction?.currency_id || '',
-      network_id: t.cash_flow_transaction?.network_id || '',
-      description: t.cash_flow_transaction?.description || '',
-      transaction_date: t.cash_flow_transaction?.transaction_date || '',
-      quotation: t.cash_flow_transaction?.quotation_at_transaction || '',
-      receipt: null,
+      currency_id: t.currency_id ? String(t.currency_id) : '',
+      network_id: t.network_id ? String(t.network_id) : '',
+      transaction_date: t.transaction_date || '',
+      quotation_at_transaction: t.quotation_at_transaction || '',
+      wallet_destination: t.wallet_destination || '',
+      tx_hash: t.tx_hash || '',
+      description: t.description || '',
     });
     setShow(true);
   };
@@ -86,32 +100,21 @@ export default function AdminTransactions() {
     setForm(f => ({ ...f, transaction_date: dateValue }));
     if (dateValue) {
       const quotation = await fetchDollarQuotation(dateValue);
-      setForm(f => ({ ...f, quotation }));
+      setForm(f => ({ ...f, quotation_at_transaction: quotation }));
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (editing) {
-      api.put(`/admin/client-transactions/${editing.id}`, form).then(() => { setShow(false); load(); });
-    } else {
-      const data = new FormData();
-      Object.entries(form).forEach(([key, val]) => {
-        if (key === 'receipt') {
-          if (val) data.append('receipt', val);
-        } else if (val !== '' && val !== null) {
-          data.append(key, val);
-        }
-      });
-      api.post('/admin/client-transactions', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }).then(() => { setShow(false); load(); });
-    }
+    const request = editing
+      ? api.put(`/admin/internal-transactions/${editing.id}`, form)
+      : api.post('/admin/internal-transactions', form);
+    request.then(() => { setShow(false); load(); });
   };
 
   const handleDelete = (id) => {
     if (!window.confirm('Confirma exclusão?')) return;
-    api.delete(`/admin/client-transactions/${id}`).then(load);
+    api.delete(`/admin/internal-transactions/${id}`).then(load);
   };
 
   const toggleSelect = (id) => {
@@ -134,14 +137,14 @@ export default function AdminTransactions() {
     if (!selected.size) return;
     if (!window.confirm(`Confirma exclusão de ${selected.size} item(ns)?`)) return;
     setDeleting(true);
-    await Promise.all([...selected].map(id => api.delete(`/admin/client-transactions/${id}`)));
+    await Promise.all([...selected].map(id => api.delete(`/admin/internal-transactions/${id}`)));
     setSelected(new Set());
     setDeleting(false);
     load();
   };
 
   const filtered = items.filter(t => {
-    const matchesSearch = !search || (t.client?.full_name || '').toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !search || (t.collaborator?.name || '').toLowerCase().includes(search.toLowerCase());
     const matchesType = !filterType || t.type === filterType;
     return matchesSearch && matchesType;
   });
@@ -150,8 +153,8 @@ export default function AdminTransactions() {
     <div className="page-container">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h4 className="page-title mb-0">Transações Externas</h4>
-          <p className="page-subtitle mb-0">Valores iniciais, atualizados e saques de clientes</p>
+          <h4 className="page-title mb-0">Transações Internas</h4>
+          <p className="page-subtitle mb-0">Transações entre admin e colaboradores</p>
         </div>
         <Button className="btn-gold" onClick={openNew}><LuPlus className="me-2" size={14} />Nova Transação</Button>
       </div>
@@ -159,14 +162,16 @@ export default function AdminTransactions() {
       <div className="filter-bar">
         <div className="filter-search">
           <LuSearch size={14} className="filter-search-icon" />
-          <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
+          <input type="text" placeholder="Buscar colaborador..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="">Todos</option>
-          <option value="deposit">Valor Inicial</option>
-          <option value="contribution">Aporte</option>
-          <option value="withdrawal">Saque</option>
+          <option value="initial_value">Valor Inicial</option>
           <option value="updated_value">Valor Atualizado</option>
+          <option value="deposit">Aporte</option>
+          <option value="withdrawal">Retirada</option>
+          <option value="commission_withdrawal">Saque Comissão</option>
+          <option value="client_withdrawal">Saque Cliente</option>
         </select>
         {selected.size > 0 && (
           <button className="btn btn-sm btn-outline-danger-custom d-flex align-items-center gap-1" onClick={handleDeleteSelected} disabled={deleting}>
@@ -186,12 +191,13 @@ export default function AdminTransactions() {
                 <th style={{ width: 40 }}>
                   <input type="checkbox" className="form-check-input bulk-checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleSelectAll} />
                 </th>
-                <th>Cliente</th>
+                <th>Colaborador</th>
                 <th>Tipo</th>
                 <th>Valor</th>
                 <th>Moeda</th>
                 <th>Data</th>
                 <th>Cotação USD</th>
+                <th>Hash</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -201,22 +207,27 @@ export default function AdminTransactions() {
                   <td>
                     <input type="checkbox" className="form-check-input bulk-checkbox" checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
                   </td>
-                  <td data-label="Cliente" className="text-white fw-medium">{t.client?.full_name}</td>
+                  <td data-label="Colaborador" className="text-white fw-medium">{t.collaborator?.name}</td>
                   <td data-label="Tipo">
-                    <span className={t.type === 'deposit' ? 'badge-deposit' : t.type === 'contribution' ? 'badge-petrol' : t.type === 'withdrawal' ? 'badge-withdrawal' : t.type === 'updated_value' ? 'badge-gold' : 'badge-stone'}>
+                    <span className={
+                      t.type === 'initial_value' ? 'badge-deposit' :
+                      t.type === 'updated_value' ? 'badge-gold' :
+                      t.type === 'deposit' ? 'badge-petrol' :
+                      t.type === 'withdrawal' ? 'badge-withdrawal' :
+                      t.type === 'client_withdrawal' ? 'badge-withdrawal' :
+                      'badge-gold'
+                    }>
                       {typeMap[t.type] || t.type}
                     </span>
-                    {t.type === 'updated_value' && t.reference_month && (
-                      <small className="text-stone ms-1">({String(t.reference_month).padStart(2, '0')}/{t.reference_year})</small>
-                    )}
                   </td>
-                  <td data-label="Valor" className={['deposit', 'updated_value', 'contribution'].includes(t.type) ? 'text-petrol fw-semibold' : t.type === 'withdrawal' ? 'fw-semibold' : ''}
-                      style={t.type === 'withdrawal' ? { color: '#e07060' } : {}}>
+                  <td data-label="Valor" className={['initial_value', 'updated_value', 'deposit'].includes(t.type) ? 'text-petrol fw-semibold' : 'fw-semibold'}
+                      style={['withdrawal', 'commission_withdrawal', 'client_withdrawal'].includes(t.type) ? { color: '#e07060' } : {}}>
                     {formatCurrency(t.amount)}
                   </td>
-                  <td data-label="Moeda">{t.cash_flow_transaction?.currency?.code}</td>
-                  <td data-label="Data">{t.cash_flow_transaction?.transaction_date}</td>
-                  <td data-label="Cotação USD">{t.cash_flow_transaction?.quotation_at_transaction ? formatUSD(t.cash_flow_transaction.quotation_at_transaction) : '-'}</td>
+                  <td data-label="Moeda">{t.currency?.code}</td>
+                  <td data-label="Data">{t.transaction_date}</td>
+                  <td data-label="Cotação USD">{t.quotation_at_transaction ? formatUSD(t.quotation_at_transaction) : '-'}</td>
+                  <td data-label="Hash"><code className="text-stone">{t.tx_hash || '-'}</code></td>
                   <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">
                       <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(t)}><LuPencilLine size={13} /></button>
@@ -232,77 +243,67 @@ export default function AdminTransactions() {
 
       <Modal show={show} onHide={() => setShow(false)} centered contentClassName="bg-dark text-white">
         <Modal.Header closeButton closeVariant="white">
-          <Modal.Title>{editing ? 'Editar Transação' : 'Nova Transação'}</Modal.Title>
+          <Modal.Title>{editing ? 'Editar Transação Interna' : 'Nova Transação Interna'}</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Cliente</Form.Label>
-              <Form.Select value={form.client_id} onChange={e => setForm({ ...form, client_id: e.target.value })} required className="bg-dark text-white border-secondary">
+              <Form.Label>Colaborador</Form.Label>
+              <Form.Select value={form.collaborator_id} onChange={e => setForm({ ...form, collaborator_id: e.target.value })} required className="bg-dark text-white border-secondary">
                 <option value="">Selecione...</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+                {collaborators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Tipo</Form.Label>
               <Form.Select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="bg-dark text-white border-secondary">
-                <option value="deposit">Valor Inicial</option>
-                <option value="contribution">Aporte</option>
-                <option value="withdrawal">Saque</option>
+                <option value="initial_value">Valor Inicial</option>
                 <option value="updated_value">Valor Atualizado</option>
+                <option value="deposit">Aporte</option>
+                <option value="withdrawal">Retirada</option>
+                <option value="commission_withdrawal">Saque Comissão</option>
+          <option value="client_withdrawal">Saque Cliente</option>
               </Form.Select>
             </Form.Group>
-            {form.type === 'updated_value' && (
-              <Form.Group className="mb-3">
-                <Form.Label>Referente ao mês</Form.Label>
-                <div className="d-flex gap-2">
-                  <Form.Select value={form.reference_month || ''} onChange={e => setForm({ ...form, reference_month: e.target.value })} required className="bg-dark text-white border-secondary">
-                    <option value="">Mês...</option>
-                    {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map((m, i) => (
-                      <option key={i + 1} value={i + 1}>{m}</option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control type="number" placeholder="Ano" value={form.reference_year || ''} onChange={e => setForm({ ...form, reference_year: e.target.value })} required className="bg-dark text-white border-secondary" style={{ maxWidth: 100 }} />
-                </div>
-              </Form.Group>
-            )}
             <Form.Group className="mb-3">
               <Form.Label>Valor</Form.Label>
               <CurrencyInput value={form.amount} onChange={v => setForm({ ...form, amount: v })} required className="bg-dark text-white border-secondary" />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Débito Inicial</Form.Label>
-              <CurrencyInput value={form.initial_debit} onChange={v => setForm({ ...form, initial_debit: v })} className="bg-dark text-white border-secondary" placeholder="Perda do mês anterior" />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Moeda</Form.Label>
-              <Form.Select value={form.currency_id} onChange={e => setForm({ ...form, currency_id: e.target.value })} required className="bg-dark text-white border-secondary">
-                <option value="">Selecione...</option>
-                {currencies.map(c => <option key={c.id} value={c.id}>{c.code} - {c.name}</option>)}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Rede</Form.Label>
-              <Form.Select value={form.network_id} onChange={e => setForm({ ...form, network_id: e.target.value })} required className="bg-dark text-white border-secondary">
-                <option value="">Selecione...</option>
-                {networks.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
-              </Form.Select>
-            </Form.Group>
+            <div className="row mb-3">
+              <Form.Group className="col">
+                <Form.Label>Moeda</Form.Label>
+                <Form.Select value={form.currency_id} onChange={e => setForm({ ...form, currency_id: e.target.value })} required className="bg-dark text-white border-secondary">
+                  <option value="">Selecione...</option>
+                  {currencies.map(c => <option key={c.id} value={c.id}>{c.code}</option>)}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="col">
+                <Form.Label>Rede</Form.Label>
+                <Form.Select value={form.network_id} onChange={e => setForm({ ...form, network_id: e.target.value })} className="bg-dark text-white border-secondary">
+                  <option value="">Selecione...</option>
+                  {networks.map(n => <option key={n.id} value={n.id}>{n.name}</option>)}
+                </Form.Select>
+              </Form.Group>
+            </div>
             <Form.Group className="mb-3">
               <Form.Label>Data da Transação</Form.Label>
               <Form.Control type="date" value={form.transaction_date} onChange={e => handleDateChange(e.target.value)} required className="bg-dark text-white border-secondary" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Cotação Dólar</Form.Label>
-              <CurrencyInput value={form.quotation} onChange={v => setForm({ ...form, quotation: v })} className="bg-dark text-white border-secondary" placeholder="Preenchido automaticamente pela data" prefix="$" />
+              <CurrencyInput value={form.quotation_at_transaction} onChange={v => setForm({ ...form, quotation_at_transaction: v })} className="bg-dark text-white border-secondary" placeholder="Preenchido automaticamente pela data" prefix="$" />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Wallet de Destino</Form.Label>
+              <Form.Control value={form.wallet_destination} onChange={e => setForm({ ...form, wallet_destination: e.target.value })} className="bg-dark text-white border-secondary" />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Hash</Form.Label>
+              <Form.Control value={form.tx_hash} onChange={e => setForm({ ...form, tx_hash: e.target.value })} className="bg-dark text-white border-secondary" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Descrição</Form.Label>
               <Form.Control value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-dark text-white border-secondary" />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Comprovante</Form.Label>
-              <Form.Control type="file" accept="image/*" onChange={e => setForm({ ...form, receipt: e.target.files[0] || null })} className="bg-dark text-white border-secondary" />
             </Form.Group>
           </Modal.Body>
           <Modal.Footer className="border-secondary">

@@ -4,8 +4,8 @@ import { LuFileText, LuDownload, LuSearch } from 'react-icons/lu';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const monthNames = ['', 'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const monthNames = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 export default function ClientReports() {
   const [reports, setReports] = useState([]);
@@ -24,7 +24,7 @@ export default function ClientReports() {
         const url = window.URL.createObjectURL(new Blob([res.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `relatorio-${month}-${year}.pdf`);
+        link.setAttribute('download', `Relatorio Cliente - ${month}-${year}.pdf`);
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -48,7 +48,7 @@ export default function ClientReports() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h4 className="page-title">Meus Relatorios</h4>
+        <h4 className="page-title">Meus Relatórios</h4>
         <p className="page-subtitle">Acompanhe sua rentabilidade mensal</p>
       </div>
 
@@ -68,7 +68,7 @@ export default function ClientReports() {
         <Card className="chart-card">
           <Card.Body className="text-center py-5">
             <LuFileText size={40} className="text-stone mb-3" />
-            <p className="text-stone mb-0">Nenhum relatorio disponivel.</p>
+            <p className="text-stone mb-0">Nenhum relatório disponível.</p>
           </Card.Body>
         </Card>
       ) : (
@@ -78,53 +78,54 @@ export default function ClientReports() {
               <Table className="table-dark table-hover align-middle responsive-table">
                 <thead>
                   <tr>
-                    <th>Periodo</th>
-                    <th>Depositos</th>
-                    <th>Saques</th>
-                    <th>Liquido</th>
-                    <th>Rentabilidade</th>
-                    <th>Acoes</th>
+                    <th>Período</th>
+                    <th>Valor Inicial</th>
+                    <th>Valor Atualizado</th>
+                    <th>Ganho Real</th>
+                    <th>Ganho %</th>
+                    <th>Lucro</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center text-stone py-4">Nenhum relatorio encontrado.</td>
+                      <td colSpan="7" className="text-center text-stone py-4">Nenhum relatório encontrado.</td>
                     </tr>
                   ) : (
-                    filtered.map(r => {
-                      const net = Number(r.total_deposits) - Number(r.total_withdrawals);
-                      return (
-                        <tr key={`${r.year}-${r.month}`}>
-                          <td data-label="Período">
-                            <Link to={`/reports/${r.year}/${r.month}`} className="text-decoration-none text-white fw-medium">
-                              <LuFileText size={14} className="text-gold me-2" />
-                              {monthNames[r.month]} / {r.year}
+                    filtered.map(r => (
+                      <tr key={`${r.year}-${r.month}`}>
+                        <td data-label="Período">
+                          <Link to={`/reports/${r.year}/${r.month}`} className="text-decoration-none text-white fw-medium">
+                            <LuFileText size={14} className="text-gold me-2" />
+                            {monthNames[r.month]} / {r.year}
+                          </Link>
+                        </td>
+                        <td data-label="Valor Inicial" className="text-petrol fw-medium">{formatCurrency(r.initial_value)}</td>
+                        <td data-label="Valor Atualizado" className="text-white fw-medium">{formatCurrency(r.updated_value)}</td>
+                        <td data-label="Ganho Real" className={Number(r.real_gain) >= 0 ? 'text-petrol fw-semibold' : 'fw-semibold'} style={Number(r.real_gain) < 0 ? { color: '#e07060' } : {}}>
+                          {formatCurrency(r.real_gain)}
+                        </td>
+                        <td data-label="Ganho %">
+                          <span className={Number(r.gain_percentage) >= 0 ? 'badge-gold' : 'badge-withdrawal'}>
+                            {Number(r.gain_percentage).toFixed(2)}%
+                          </span>
+                        </td>
+                        <td data-label="Lucro" className={Number(r.profit_value) >= 0 ? 'text-gold fw-semibold' : 'fw-semibold'} style={Number(r.profit_value) < 0 ? { color: '#e07060' } : {}}>
+                          {formatCurrency(r.profit_value)}
+                        </td>
+                        <td data-label="Ações" className="td-actions">
+                          <div className="d-flex gap-1">
+                            <Link to={`/reports/${r.year}/${r.month}`} className="btn btn-outline-gold btn-sm">
+                              Detalhar
                             </Link>
-                          </td>
-                          <td data-label="Depósitos" className="text-petrol fw-medium">{formatCurrency(r.total_deposits)}</td>
-                          <td data-label="Saques" style={{ color: '#e07060' }} className="fw-medium">{formatCurrency(r.total_withdrawals)}</td>
-                          <td data-label="Líquido" className={net >= 0 ? 'text-gold fw-semibold' : 'fw-semibold'} style={net < 0 ? { color: '#e07060' } : {}}>
-                            {formatCurrency(net)}
-                          </td>
-                          <td data-label="Rentabilidade">
-                            <span className={Number(r.profitability_percent) >= 0 ? 'badge-gold' : 'badge-withdrawal'}>
-                              {Number(r.profitability_percent).toFixed(2)}%
-                            </span>
-                          </td>
-                          <td data-label="Ações" className="td-actions">
-                            <div className="d-flex gap-1">
-                              <Link to={`/reports/${r.year}/${r.month}`} className="btn btn-outline-gold btn-sm">
-                                Detalhar
-                              </Link>
-                              <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.year, r.month)} title="Baixar PDF">
-                                <LuDownload size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
+                            <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.year, r.month)} title="Baixar PDF">
+                              <LuDownload size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </Table>

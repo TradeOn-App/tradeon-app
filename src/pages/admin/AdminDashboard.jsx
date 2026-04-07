@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
-import { LuUsers, LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins, LuArrowRightLeft, LuPercent, LuTrendingUp } from 'react-icons/lu';
+import { LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins, LuPercent, LuTrendingUp, LuChevronDown, LuCalendar } from 'react-icons/lu';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import api from '../../services/api';
@@ -8,7 +8,7 @@ import { useSelectedClient } from '../../hooks/useSelectedClient';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt = (d) => d.toISOString().split('T')[0];
 
 export default function AdminDashboard() {
@@ -17,10 +17,13 @@ export default function AdminDashboard() {
   const [period, setPeriod] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const { selectedClientId } = useSelectedClient();
+  const [showRange, setShowRange] = useState(false);
+  const rangeRef = useRef(null);
+  const { selectedClientId, setSelectedClientId, clients } = useSelectedClient();
 
   const handlePeriod = (key) => {
     setPeriod(key);
+    setShowRange(false);
     const now = new Date();
     if (key === 'today') {
       const d = fmt(now);
@@ -42,6 +45,26 @@ export default function AdminDashboard() {
     }
   };
 
+  // Close range picker on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (rangeRef.current && !rangeRef.current.contains(e.target)) {
+        setShowRange(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedClientName = clients.find(c => String(c.id) === String(selectedClientId))?.full_name;
+  const headerLabel = selectedClientId ? selectedClientName : 'Gerais';
+
+  const formatDateBR = (d) => {
+    if (!d) return '';
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  };
+
   useEffect(() => {
     setLoading(true);
     const params = {};
@@ -60,15 +83,13 @@ export default function AdminDashboard() {
   if (!data) return null;
 
   const cards = [
-    { title: 'Clientes Ativos', value: data.cards.total_clients, icon: <LuUsers size={22} />, iconClass: 'icon-gold' },
-    { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Total Depósitos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
     { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
     { title: 'Saldo Geral', value: formatCurrency(data.cards.balance), icon: <LuWallet size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
     { title: 'Lucro Total', value: formatCurrency(data.cards.total_profit), icon: <LuTrendingUp size={22} />, iconClass: 'icon-gold', valueClass: 'metric-value-gold' },
     { title: 'Rentabilidade Média', value: data.cards.avg_profitability + '%', icon: <LuPercent size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Volume P2P', value: formatCurrency(data.cards.total_p2p), icon: <LuArrowRightLeft size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Operacoes P2P', value: data.cards.p2p_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
-    { title: 'Total Comissoes', value: formatCurrency(data.cards.total_commissions), icon: <LuPercent size={22} />, iconClass: 'icon-gold' },
+    { title: 'Operações P2P', value: data.cards.p2p_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
+    { title: 'Total Comissões', value: formatCurrency(data.cards.total_commissions), icon: <LuPercent size={22} />, iconClass: 'icon-gold' },
     { title: 'Entradas Caixa', value: formatCurrency(data.cards.cash_flow_entries), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
   ];
 
@@ -76,7 +97,7 @@ export default function AdminDashboard() {
     labels: data.chart.map(c => c.period),
     datasets: [
       {
-        label: 'Rendimento Liquido',
+        label: 'Rendimento Líquido',
         data: data.chart.map(c => c.net),
         borderColor: '#00b3b3',
         backgroundColor: 'rgba(0,179,179,0.1)',
@@ -88,7 +109,7 @@ export default function AdminDashboard() {
         pointRadius: 4,
       },
       {
-        label: 'Depositos',
+        label: 'Depósitos',
         data: data.chart.map(c => c.deposits),
         borderColor: '#BFA071',
         fill: false,
@@ -168,32 +189,75 @@ export default function AdminDashboard() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h4 className="page-title">Dashboard <span className="page-title-petrol">Admin</span></h4>
-        <p className="page-subtitle">Visao consolidada de todas as operacoes</p>
-      </div>
-
-      <div className="filter-bar align-items-center">
-        <div className="d-flex gap-2">
-          {[
-            { key: 'today', label: 'Hoje' },
-            { key: 'week', label: 'Semana' },
-            { key: 'month', label: 'Mês' },
-            { key: 'all', label: 'Todos' },
-          ].map(p => (
-            <button
-              key={p.key}
-              className={`btn btn-sm ${period === p.key ? 'btn-gold' : 'btn-outline-gold'}`}
-              onClick={() => handlePeriod(p.key)}
-            >
-              {p.label}
-            </button>
-          ))}
+      <div className="dashboard-topbar">
+        <div className="dashboard-topbar-left">
+          <h4 className="page-title" style={{ marginBottom: 0 }}>
+            Dados{' '}
+            <span className="client-selector-wrapper">
+              <select
+                className="client-selector-inline"
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+              >
+                <option value="">Gerais</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>{c.full_name}</option>
+                ))}
+              </select>
+              <LuChevronDown size={18} className="client-selector-arrow" />
+            </span>
+          </h4>
         </div>
-        <div className="d-flex gap-2 align-items-center">
-          <input type="date" className="filter-select" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPeriod('custom'); }} />
-          <span className="text-stone">até</span>
-          <input type="date" className="filter-select" value={dateTo} onChange={e => { setDateTo(e.target.value); setPeriod('custom'); }} />
+        <div className="dashboard-topbar-right">
+          <div className="d-flex gap-2 align-items-center">
+            {[
+              { key: 'today', label: 'Hoje' },
+              { key: 'week', label: 'Semana' },
+              { key: 'month', label: 'Mês' },
+              { key: 'all', label: 'Todos' },
+            ].map(p => (
+              <button
+                key={p.key}
+                className={`btn btn-sm ${period === p.key ? 'btn-gold' : 'btn-outline-gold'}`}
+                onClick={() => handlePeriod(p.key)}
+              >
+                {p.label}
+              </button>
+            ))}
+            <div className="date-range-wrapper" ref={rangeRef}>
+              <button
+                className={`btn btn-sm date-range-toggle ${period === 'custom' ? 'btn-gold' : 'btn-outline-gold'}`}
+                onClick={() => setShowRange(!showRange)}
+              >
+                <LuCalendar size={14} className="me-1" />
+                {period === 'custom' && dateFrom && dateTo
+                  ? `${formatDateBR(dateFrom)} - ${formatDateBR(dateTo)}`
+                  : 'Período'}
+              </button>
+              {showRange && (
+                <div className="date-range-dropdown">
+                  <div className="date-range-field">
+                    <label className="date-range-label">De</label>
+                    <input
+                      type="date"
+                      className="date-range-input"
+                      value={dateFrom}
+                      onChange={e => { setDateFrom(e.target.value); setPeriod('custom'); }}
+                    />
+                  </div>
+                  <div className="date-range-field">
+                    <label className="date-range-label">Até</label>
+                    <input
+                      type="date"
+                      className="date-range-input"
+                      value={dateTo}
+                      onChange={e => { setDateTo(e.target.value); setPeriod('custom'); }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -217,7 +281,7 @@ export default function AdminDashboard() {
         <Col xs={12} lg={8}>
           <Card className="chart-card">
             <Card.Body className="p-4">
-              <h6 className="chart-title mb-4">Evolucao de Rendimentos</h6>
+              <h6 className="chart-title mb-4">Evolução de Rendimentos</h6>
               <Line data={revenueChart} options={chartOpts} />
             </Card.Body>
           </Card>

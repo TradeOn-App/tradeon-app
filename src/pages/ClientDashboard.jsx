@@ -7,7 +7,7 @@ import api from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function ClientDashboard() {
   const [data, setData] = useState(null);
@@ -24,14 +24,14 @@ export default function ClientDashboard() {
   }
 
   if (!data) {
-    return <p className="text-stone p-4">Nenhum dado disponivel.</p>;
+    return <p className="text-stone p-4">Nenhum dado disponível.</p>;
   }
 
   const chartData = {
     labels: data.chart.map(c => c.period),
     datasets: [
       {
-        label: 'Rendimento Liquido',
+        label: 'Rendimento Líquido',
         data: data.chart.map(c => c.net),
         borderColor: '#00b3b3',
         backgroundColor: 'rgba(0,179,179,0.1)',
@@ -44,7 +44,7 @@ export default function ClientDashboard() {
         pointHoverRadius: 6,
       },
       {
-        label: 'Depositos',
+        label: 'Depósitos',
         data: data.chart.map(c => c.deposits),
         borderColor: '#BFA071',
         backgroundColor: 'rgba(191,160,113,0.08)',
@@ -110,17 +110,17 @@ export default function ClientDashboard() {
   };
 
   const cards = [
-    { title: 'Total Depositos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
+    { title: 'Total Depósitos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
     { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
     { title: 'Saldo', value: formatCurrency(data.cards.balance), icon: <LuWallet size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
-    { title: 'Transacoes', value: data.cards.transaction_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
+    { title: 'Transações', value: data.cards.transaction_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
   ];
 
   return (
     <div className="page-container">
       <div className="page-header">
         <h4 className="page-title">Dashboard</h4>
-        <p className="page-subtitle">Visao geral da sua conta</p>
+        <p className="page-subtitle">Visão geral da sua conta</p>
       </div>
 
       <Row className="g-3 mb-4">
@@ -141,7 +141,7 @@ export default function ClientDashboard() {
 
       <Card className="chart-card">
         <Card.Body className="p-4">
-          <h6 className="chart-title mb-4">Evolucao de Rendimentos</h6>
+          <h6 className="chart-title mb-4">Evolução de Rendimentos</h6>
           <Line data={chartData} options={chartOptions} />
         </Card.Body>
       </Card>
