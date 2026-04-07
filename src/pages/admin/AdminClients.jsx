@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuPencilLine, LuTrash2, LuSearch } from 'react-icons/lu';
+import { LuPlus, LuPencilLine, LuTrash2, LuSearch, LuPower } from 'react-icons/lu';
 import api from '../../services/api';
 
 export default function AdminClients() {
@@ -37,6 +37,12 @@ export default function AdminClients() {
       ? api.put(`/admin/clients/${editing.id}`, form)
       : api.post('/admin/clients', form);
     req.then(() => { setShow(false); load(); });
+  };
+
+  const handleToggleActive = (c) => {
+    const action = c.is_active ? 'inativar' : 'ativar';
+    if (!window.confirm(`Confirma ${action} o cliente "${c.full_name}"?`)) return;
+    api.put(`/admin/clients/${c.id}`, { is_active: !c.is_active }).then(load);
   };
 
   const handleDelete = (id) => {
@@ -106,6 +112,13 @@ export default function AdminClients() {
                   <td data-label="Status"><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativo' : 'Inativo'}</span></td>
                   <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">
+                      <button
+                        className={`btn btn-sm ${c.is_active ? 'btn-outline-danger-custom' : 'btn-outline-success'}`}
+                        title={c.is_active ? 'Inativar' : 'Ativar'}
+                        onClick={() => handleToggleActive(c)}
+                      >
+                        <LuPower size={13} />
+                      </button>
                       <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(c)}><LuPencilLine size={13} /></button>
                       <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(c.id)}><LuTrash2 size={13} /></button>
                     </div>
