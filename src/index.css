@@ -601,6 +601,29 @@ a:hover {
   color: var(--text);
 }
 
+/* Currency toggle */
+.currency-flag-btn {
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.55rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.25s;
+  opacity: 0.5;
+}
+.currency-flag-btn:hover {
+  opacity: 0.8;
+  border-color: var(--gold);
+}
+.currency-flag-btn.active {
+  opacity: 1;
+  border-color: var(--gold);
+  background: rgba(191, 160, 113, 0.12);
+  box-shadow: 0 0 8px rgba(191, 160, 113, 0.2);
+}
+
 .btn-gold {
   background: linear-gradient(135deg, var(--gold), var(--gold-light));
   color: #0a0a0a;

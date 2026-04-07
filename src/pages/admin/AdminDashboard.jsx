@@ -8,7 +8,8 @@ import { useSelectedClient } from '../../hooks/useSelectedClient';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatBRL = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatUSDT = (v) => Number(v).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmt = (d) => d.toISOString().split('T')[0];
 
 export default function AdminDashboard() {
@@ -18,8 +19,11 @@ export default function AdminDashboard() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showRange, setShowRange] = useState(false);
+  const [currency, setCurrency] = useState('USDT');
   const rangeRef = useRef(null);
   const { selectedClientId, setSelectedClientId, clients } = useSelectedClient();
+
+  const formatCurrency = currency === 'BRL' ? formatBRL : formatUSDT;
 
   const handlePeriod = (key) => {
     setPeriod(key);
@@ -67,14 +71,14 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    const params = {};
+    const params = { currency };
     if (dateFrom) params.from = dateFrom;
     if (dateTo) params.to = dateTo;
     if (selectedClientId) params.client_id = selectedClientId;
     api.get('/admin/dashboard', { params })
       .then(r => setData(r.data))
       .finally(() => setLoading(false));
-  }, [dateFrom, dateTo, selectedClientId]);
+  }, [dateFrom, dateTo, selectedClientId, currency]);
 
   if (loading) {
     return <div className="d-flex justify-content-center align-items-center" style={{ minHeight: 400 }}><Spinner animation="border" className="spinner-gold" /></div>;
@@ -210,6 +214,22 @@ export default function AdminDashboard() {
         </div>
         <div className="dashboard-topbar-right">
           <div className="d-flex gap-2 align-items-center">
+            <div className="currency-toggle d-flex align-items-center gap-1 me-2">
+              <button
+                className={`btn btn-sm currency-flag-btn ${currency === 'USDT' ? 'active' : ''}`}
+                onClick={() => setCurrency('USDT')}
+                title="USDT (Dólar)"
+              >
+                <span className="fi-us">🇺🇸</span>
+              </button>
+              <button
+                className={`btn btn-sm currency-flag-btn ${currency === 'BRL' ? 'active' : ''}`}
+                onClick={() => setCurrency('BRL')}
+                title="BRL (Real)"
+              >
+                <span className="fi-br">🇧🇷</span>
+              </button>
+            </div>
             {[
               { key: 'today', label: 'Hoje' },
               { key: 'week', label: 'Semana' },
