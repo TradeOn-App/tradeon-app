@@ -14,8 +14,12 @@ export default function ChangePasswordModal({ show, onChanged }) {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('A senha deve ter no mínimo 6 caracteres.');
+    if (password.length < 12) {
+      setError('A senha deve ter no mínimo 12 caracteres.');
+      return;
+    }
+    if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[@$!%*?&#]/.test(password)) {
+      setError('A senha deve conter letras maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&#).');
       return;
     }
 
@@ -51,9 +55,9 @@ export default function ChangePasswordModal({ show, onChanged }) {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={12}
                 className="bg-dark text-white border-secondary"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 12 caracteres (A-z, 0-9, @$!%*?&#)"
               />
               <button
                 type="button"
@@ -74,7 +78,7 @@ export default function ChangePasswordModal({ show, onChanged }) {
               value={passwordConfirmation}
               onChange={e => setPasswordConfirmation(e.target.value)}
               required
-              minLength={6}
+              minLength={12}
               className="bg-dark text-white border-secondary"
               placeholder="Repita a nova senha"
             />
