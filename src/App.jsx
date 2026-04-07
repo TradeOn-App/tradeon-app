@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import ChangePasswordModal from './components/ChangePasswordModal';
 import Login from './pages/Login';
 import ClientDashboard from './pages/ClientDashboard';
 import ClientReports from './pages/ClientReports';
@@ -28,10 +29,16 @@ function AdminRoute({ children }) {
 }
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const mustChangePassword = user && user.must_change_password;
 
   return (
+    <>
+    <ChangePasswordModal
+      show={!!mustChangePassword}
+      onChanged={() => updateUser({ must_change_password: false })}
+    />
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route
@@ -56,5 +63,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }

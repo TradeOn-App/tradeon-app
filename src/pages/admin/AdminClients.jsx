@@ -8,7 +8,7 @@ export default function AdminClients() {
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ full_name: '', email: '', document: '', phone: '', notes: '', commission: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', password: '', document: '', phone: '', notes: '', commission: '' });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -21,13 +21,13 @@ export default function AdminClients() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ full_name: '', email: '', document: '', phone: '', notes: '', commission: '' });
+    setForm({ full_name: '', email: '', password: '', document: '', phone: '', notes: '', commission: '' });
     setShow(true);
   };
 
   const openEdit = (c) => {
     setEditing(c);
-    setForm({ full_name: c.full_name, email: c.user?.email || '', document: c.document, phone: c.phone || '', notes: c.notes || '', commission: c.commission ?? '' });
+    setForm({ full_name: c.full_name, email: c.user?.email || '', password: '', document: c.document, phone: c.phone || '', notes: c.notes || '', commission: c.commission ?? '' });
     setShow(true);
   };
 
@@ -128,10 +128,16 @@ export default function AdminClients() {
               <Form.Control value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} required className="bg-dark text-white border-secondary" />
             </Form.Group>
             {!editing && (
-              <Form.Group className="mb-3">
-                <Form.Label>Email</Form.Label>
-                <Form.Control type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required className="bg-dark text-white border-secondary" />
-              </Form.Group>
+              <>
+                <Form.Group className="mb-3">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required className="bg-dark text-white border-secondary" />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Senha (primeiro acesso)</Form.Label>
+                  <Form.Control type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength={6} className="bg-dark text-white border-secondary" placeholder="Mínimo 6 caracteres" />
+                </Form.Group>
+              </>
             )}
             <Form.Group className="mb-3">
               <Form.Label>CPF/CNPJ</Form.Label>

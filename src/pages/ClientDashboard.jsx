@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
-import { LuCircleArrowUp, LuCircleArrowDown, LuWallet, LuCoins } from 'react-icons/lu';
+import { LuCircleArrowUp, LuWallet } from 'react-icons/lu';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import api from '../services/api';
@@ -110,10 +110,8 @@ export default function ClientDashboard() {
   };
 
   const cards = [
-    { title: 'Total Depósitos', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
-    { title: 'Total Saques', value: formatCurrency(data.cards.total_withdrawals), icon: <LuCircleArrowDown size={22} />, iconClass: 'icon-danger' },
+    { title: 'Total de Depósito', value: formatCurrency(data.cards.total_deposits), icon: <LuCircleArrowUp size={22} />, iconClass: 'icon-petrol' },
     { title: 'Saldo', value: formatCurrency(data.cards.balance), icon: <LuWallet size={22} />, iconClass: 'icon-petrol', valueClass: 'metric-value-petrol' },
-    { title: 'Transações', value: data.cards.transaction_count, icon: <LuCoins size={22} />, iconClass: 'icon-stone' },
   ];
 
   return (
@@ -125,7 +123,7 @@ export default function ClientDashboard() {
 
       <Row className="g-3 mb-4">
         {cards.map((c, i) => (
-          <Col key={i} xs={12} sm={6} lg={3}>
+          <Col key={i} xs={12} sm={6}>
             <Card className="metric-card h-100">
               <Card.Body className="d-flex align-items-center gap-3 py-3">
                 <div className={`metric-icon ${c.iconClass}`}>{c.icon}</div>

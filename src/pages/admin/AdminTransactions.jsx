@@ -267,12 +267,12 @@ export default function AdminTransactions() {
               </Form.Group>
             )}
             <Form.Group className="mb-3">
-              <Form.Label>Valor</Form.Label>
-              <CurrencyInput value={form.amount} onChange={v => setForm({ ...form, amount: v })} required className="bg-dark text-white border-secondary" />
+              <Form.Label>Valor (USD)</Form.Label>
+              <CurrencyInput value={form.amount} onChange={v => setForm({ ...form, amount: v })} required className="bg-dark text-white border-secondary" prefix="$" />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Débito Inicial</Form.Label>
-              <CurrencyInput value={form.initial_debit} onChange={v => setForm({ ...form, initial_debit: v })} className="bg-dark text-white border-secondary" placeholder="Perda do mês anterior" />
+              <Form.Label>Débito Inicial (USD)</Form.Label>
+              <CurrencyInput value={form.initial_debit} onChange={v => setForm({ ...form, initial_debit: v })} className="bg-dark text-white border-secondary" placeholder="Perda do mês anterior" prefix="$" />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Moeda</Form.Label>
