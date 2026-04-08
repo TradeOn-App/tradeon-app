@@ -70,6 +70,7 @@ export default function ChangePasswordModal({ show, onChanged }) {
                 {showPassword ? <LuEye size={18} /> : <LuEyeOff size={18} />}
               </button>
             </div>
+            <Form.Text className="text-secondary">A senha deve ter no mínimo 12 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&#).</Form.Text>
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Confirmar Nova Senha</Form.Label>

@@ -1,7 +1,30 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuPencilLine, LuTrash2, LuSearch, LuPower, LuSettings } from 'react-icons/lu';
+import { LuPlus, LuPencilLine, LuTrash2, LuSearch, LuPower, LuSettings, LuEye, LuEyeOff, LuCopy, LuRefreshCw } from 'react-icons/lu';
 import api from '../../services/api';
+
+function generatePassword() {
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const digits = '0123456789';
+  const special = '@$!%*?&#';
+  const all = lower + upper + digits + special;
+
+  // Garantir pelo menos 1 de cada tipo
+  let pwd = '';
+  pwd += lower[Math.floor(Math.random() * lower.length)];
+  pwd += upper[Math.floor(Math.random() * upper.length)];
+  pwd += digits[Math.floor(Math.random() * digits.length)];
+  pwd += special[Math.floor(Math.random() * special.length)];
+
+  // Preencher o restante até 14 caracteres
+  for (let i = pwd.length; i < 14; i++) {
+    pwd += all[Math.floor(Math.random() * all.length)];
+  }
+
+  // Embaralhar
+  return pwd.split('').sort(() => Math.random() - 0.5).join('');
+}
 
 export default function AdminClients() {
   const [clients, setClients] = useState([]);
@@ -16,6 +39,9 @@ export default function AdminClients() {
   const [settingsForm, setSettingsForm] = useState({ email: '', password: '', password_confirmation: '' });
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState('');
+  const [formError, setFormError] = useState('');
+  const [visiblePasswords, setVisiblePasswords] = useState({});
+  const [copiedId, setCopiedId] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -26,17 +52,17 @@ export default function AdminClients() {
 
   const openNew = () => {
     setEditing(null);
-    setForm({ full_name: '', email: '', password: '', document: '', phone: '', notes: '', commission: '' });
+    setFormError('');
+    setForm({ full_name: '', email: '', password: generatePassword(), document: '', phone: '', notes: '', commission: '' });
     setShow(true);
   };
 
   const openEdit = (c) => {
     setEditing(c);
+    setFormError('');
     setForm({ full_name: c.full_name, email: c.user?.email || '', password: '', document: c.document, phone: c.phone || '', notes: c.notes || '', commission: c.commission ?? '' });
     setShow(true);
   };
-
-  const [formError, setFormError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -99,6 +125,17 @@ export default function AdminClients() {
       .finally(() => setSettingsSaving(false));
   };
 
+  const togglePasswordVisibility = (id) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const copyPassword = (password, id) => {
+    navigator.clipboard.writeText(password).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+    });
+  };
+
   const filtered = clients.filter(c => {
     const term = search.toLowerCase();
     const matchesSearch = !term ||
@@ -145,6 +182,7 @@ export default function AdminClients() {
               <tr>
                 <th>Nome</th>
                 <th>Email</th>
+                <th>Senha</th>
                 <th>Documento</th>
                 <th>Telefone</th>
                 <th>Status</th>
@@ -156,6 +194,40 @@ export default function AdminClients() {
                 <tr key={c.id}>
                   <td data-label="Nome" className="text-white fw-medium">{c.full_name}</td>
                   <td data-label="Email">{c.user?.email}</td>
+                  <td data-label="Senha">
+                    {c.access_password ? (
+                      <div className="d-flex align-items-center gap-1">
+                        <code
+                          className="text-gold"
+                          style={{
+                            filter: visiblePasswords[c.id] ? 'none' : 'blur(5px)',
+                            userSelect: visiblePasswords[c.id] ? 'text' : 'none',
+                            transition: 'filter 0.2s',
+                          }}
+                        >
+                          {c.access_password}
+                        </code>
+                        <button
+                          className="btn btn-link p-0 ms-1"
+                          onClick={() => togglePasswordVisibility(c.id)}
+                          title={visiblePasswords[c.id] ? 'Ocultar' : 'Mostrar'}
+                          style={{ color: '#aaa', lineHeight: 1 }}
+                        >
+                          {visiblePasswords[c.id] ? <LuEyeOff size={14} /> : <LuEye size={14} />}
+                        </button>
+                        <button
+                          className="btn btn-link p-0"
+                          onClick={() => copyPassword(c.access_password, c.id)}
+                          title="Copiar senha"
+                          style={{ color: copiedId === c.id ? '#c9a84c' : '#aaa', lineHeight: 1 }}
+                        >
+                          <LuCopy size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-secondary">-</span>
+                    )}
+                  </td>
                   <td data-label="Documento"><code className="text-gold">{c.document}</code></td>
                   <td data-label="Telefone">{c.phone || '-'}</td>
                   <td data-label="Status"><span className={c.is_active ? 'badge-active' : 'badge-inactive'}>{c.is_active ? 'Ativo' : 'Inativo'}</span></td>
@@ -198,7 +270,25 @@ export default function AdminClients() {
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Senha (primeiro acesso)</Form.Label>
-                  <Form.Control type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength={12} className="bg-dark text-white border-secondary" placeholder="Mínimo 12 caracteres" />
+                  <div className="d-flex gap-2">
+                    <Form.Control
+                      type="text"
+                      value={form.password}
+                      onChange={e => setForm({ ...form, password: e.target.value })}
+                      required
+                      minLength={12}
+                      className="bg-dark text-white border-secondary"
+                      placeholder="Mínimo 12 caracteres"
+                    />
+                    <Button
+                      variant="outline-secondary"
+                      onClick={() => setForm({ ...form, password: generatePassword() })}
+                      title="Gerar nova senha"
+                      style={{ whiteSpace: 'nowrap' }}
+                    >
+                      <LuRefreshCw size={14} />
+                    </Button>
+                  </div>
                   <Form.Text className="text-secondary">A senha deve ter no mínimo 12 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&#).</Form.Text>
                 </Form.Group>
               </>
@@ -257,8 +347,9 @@ export default function AdminClients() {
                 onChange={e => setSettingsForm({ ...settingsForm, password: e.target.value })}
                 className="bg-dark text-white border-secondary"
                 placeholder="Deixe em branco para manter a atual"
-                minLength={6}
+                minLength={12}
               />
+              <Form.Text className="text-secondary">A senha deve ter no mínimo 12 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&#).</Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Confirmar Nova Senha</Form.Label>
