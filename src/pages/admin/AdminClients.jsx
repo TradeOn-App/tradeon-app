@@ -36,12 +36,24 @@ export default function AdminClients() {
     setShow(true);
   };
 
+  const [formError, setFormError] = useState('');
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setFormError('');
     const req = editing
       ? api.put(`/admin/clients/${editing.id}`, form)
       : api.post('/admin/clients', form);
-    req.then(() => { setShow(false); load(); });
+    req
+      .then(() => { setShow(false); load(); })
+      .catch(err => {
+        const errors = err.response?.data?.errors;
+        if (errors) {
+          setFormError(Object.values(errors).flat().join(' '));
+        } else {
+          setFormError(err.response?.data?.message || 'Erro ao salvar.');
+        }
+      });
   };
 
   const handleToggleActive = (c) => {
@@ -186,10 +198,12 @@ export default function AdminClients() {
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Senha (primeiro acesso)</Form.Label>
-                  <Form.Control type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength={6} className="bg-dark text-white border-secondary" placeholder="Mínimo 6 caracteres" />
+                  <Form.Control type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required minLength={12} className="bg-dark text-white border-secondary" placeholder="Mínimo 12 caracteres" />
+                  <Form.Text className="text-secondary">A senha deve ter no mínimo 12 caracteres, incluindo maiúsculas, minúsculas, números e caracteres especiais (@$!%*?&#).</Form.Text>
                 </Form.Group>
               </>
             )}
+            {formError && <div className="alert alert-danger py-2">{formError}</div>}
             <Form.Group className="mb-3">
               <Form.Label>CPF/CNPJ</Form.Label>
               <Form.Control value={form.document} onChange={e => setForm({ ...form, document: e.target.value })} required className="bg-dark text-white border-secondary" />
