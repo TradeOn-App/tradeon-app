@@ -4,8 +4,9 @@ import { LuPlus, LuTrash2, LuSearch, LuPencilLine } from 'react-icons/lu';
 import api from '../../services/api';
 import CurrencyInput from '../../components/CurrencyInput';
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const formatUSD = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatCurrency = (v) => 'US$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatUSD = (v) => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatDate = (d) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; };
 const typeMap = { deposit: 'Valor Inicial', withdrawal: 'Saque', updated_value: 'Valor Atualizado', contribution: 'Aporte' };
 
 const fetchDollarQuotation = async (dateStr) => {
@@ -215,7 +216,7 @@ export default function AdminTransactions() {
                     {formatCurrency(t.amount)}
                   </td>
                   <td data-label="Moeda">{t.cash_flow_transaction?.currency?.code}</td>
-                  <td data-label="Data">{t.cash_flow_transaction?.transaction_date}</td>
+                  <td data-label="Data">{formatDate(t.cash_flow_transaction?.transaction_date)}</td>
                   <td data-label="Cotação USD">{t.cash_flow_transaction?.quotation_at_transaction ? formatUSD(t.cash_flow_transaction.quotation_at_transaction) : '-'}</td>
                   <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">

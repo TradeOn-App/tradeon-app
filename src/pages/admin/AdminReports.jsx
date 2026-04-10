@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Card, Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
-import { LuPlus, LuTrash2, LuDownload, LuSearch, LuSend, LuShare2 } from 'react-icons/lu';
+import { LuPlus, LuTrash2, LuDownload, LuSearch, LuSend, LuShare2, LuCheck } from 'react-icons/lu';
 import api from '../../services/api';
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatCurrency = (v) => 'US$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const monthNames = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const monthAbbr = ['', 'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+function valueColor(v) {
+  return Number(v) < 0 ? '#e07060' : undefined;
+}
 
 export default function AdminReports() {
   const [items, setItems] = useState([]);
@@ -116,7 +121,6 @@ export default function AdminReports() {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: `Relatório ${monthNames[month]} / ${year}` });
         } else {
-          // Fallback: download
           handleDownloadPdf(reportId);
         }
       });
@@ -126,6 +130,8 @@ export default function AdminReports() {
     if (search && !(r.client?.full_name || '').toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
+
+  const tdStyle = { padding: '0.5rem' };
 
   return (
     <div className="page-container">
@@ -146,7 +152,7 @@ export default function AdminReports() {
           <div className="d-flex gap-2">
             <button className="btn btn-sm btn-outline-gold d-flex align-items-center gap-1" onClick={handleBatchPdf}>
               <LuDownload size={13} />
-              Gerar PDF ({selected.size})
+              PDF ({selected.size})
             </button>
             <button className="btn btn-sm btn-outline-danger-custom d-flex align-items-center gap-1" onClick={handleDeleteSelected} disabled={deleting}>
               <LuTrash2 size={13} />
@@ -165,50 +171,52 @@ export default function AdminReports() {
               <Table className="table-dark table-hover align-middle responsive-table mb-0">
                 <thead>
                   <tr>
-                    <th style={{ width: 40 }}>
+                    <th style={{ width: 40, padding: '0.5rem' }}>
                       <input type="checkbox" className="form-check-input bulk-checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleSelectAll} />
                     </th>
-                    <th>Cliente</th>
-                    <th>Período</th>
-                    <th>Valor Inicial</th>
-                    <th>Valor Atualizado</th>
-                    <th>Ganho Real</th>
-                    <th>Ganho %</th>
-                    <th>Comissão</th>
-                    <th>Lucro</th>
-                    <th>Ações</th>
+                    <th style={tdStyle}>Cliente</th>
+                    <th style={tdStyle}>Período</th>
+                    <th style={tdStyle}>V. Inicial</th>
+                    <th style={tdStyle}>V. Atualizado</th>
+                    <th style={tdStyle}>Ganho Real</th>
+                    <th style={tdStyle}>Ganho %</th>
+                    <th style={tdStyle}>Comissão</th>
+                    <th style={tdStyle}>Lucro</th>
+                    <th style={tdStyle}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(r => (
                     <tr key={r.id} className={selected.has(r.id) ? 'row-selected' : ''}>
-                      <td>
+                      <td style={tdStyle}>
                         <input type="checkbox" className="form-check-input bulk-checkbox" checked={selected.has(r.id)} onChange={() => toggleSelect(r.id)} />
                       </td>
-                      <td data-label="Cliente" className="text-white fw-medium">{r.client?.full_name}</td>
-                      <td data-label="Período"><span className="badge-gold">{monthNames[r.month]} / {r.year}</span></td>
-                      <td data-label="Valor Inicial" className="text-petrol fw-medium">{formatCurrency(r.initial_value)}</td>
-                      <td data-label="Valor Atualizado" className="text-white fw-medium">{formatCurrency(r.updated_value)}</td>
-                      <td data-label="Ganho Real" className={Number(r.real_gain) >= 0 ? 'text-petrol fw-semibold' : 'fw-semibold'} style={Number(r.real_gain) < 0 ? { color: '#e07060' } : {}}>
+                      <td data-label="Cliente" className="text-white fw-medium" style={tdStyle}>{r.client?.full_name}</td>
+                      <td data-label="Período" style={tdStyle}><span className="badge-gold">{monthAbbr[r.month]}/{r.year}</span></td>
+                      <td data-label="V. Inicial" className="fw-medium" style={{ ...tdStyle, color: valueColor(r.initial_value) || '#00b3b3' }}>{formatCurrency(r.initial_value)}</td>
+                      <td data-label="V. Atualizado" className="fw-medium" style={{ ...tdStyle, color: valueColor(r.updated_value) || '#fff' }}>{formatCurrency(r.updated_value)}</td>
+                      <td data-label="Ganho Real" className="fw-semibold" style={{ ...tdStyle, color: valueColor(r.real_gain) || '#00b3b3' }}>
                         {formatCurrency(r.real_gain)}
                       </td>
-                      <td data-label="Ganho %">
-                        <span className={Number(r.gain_percentage) >= 0 ? 'text-gold fw-semibold' : 'fw-semibold'} style={Number(r.gain_percentage) < 0 ? { color: '#e07060' } : {}}>
+                      <td data-label="Ganho %" style={tdStyle}>
+                        <span className="fw-semibold" style={{ color: Number(r.gain_percentage) < 0 ? '#e07060' : Number(r.gain_percentage) >= 5 ? '#00b3b3' : 'var(--gold)' }}>
                           {Number(r.gain_percentage).toFixed(2)}%
                         </span>
                       </td>
-                      <td data-label="Comissão" className="text-gold fw-medium">{formatCurrency(r.commission_value)}</td>
-                      <td data-label="Lucro" className={Number(r.profit_value) >= 0 ? 'text-petrol fw-semibold' : 'fw-semibold'} style={Number(r.profit_value) < 0 ? { color: '#e07060' } : {}}>
+                      <td data-label="Comissão" className="text-gold fw-medium" style={tdStyle}>{formatCurrency(r.commission_value)}</td>
+                      <td data-label="Lucro" className="fw-semibold" style={{ ...tdStyle, color: valueColor(r.profit_value) || '#00b3b3' }}>
                         {formatCurrency(r.profit_value)}
                       </td>
-                      <td data-label="Ações" className="td-actions">
+                      <td data-label="Ações" className="td-actions" style={tdStyle}>
                         <div className="d-flex gap-1">
                           {!r.published_at ? (
                             <button className="btn btn-outline-gold btn-sm" onClick={() => handlePublish(r.id)} title="Enviar para o cliente">
                               <LuSend size={13} />
                             </button>
                           ) : (
-                            <span className="badge-active" style={{ fontSize: '0.7rem', padding: '2px 6px' }}>Enviado</span>
+                            <button className="btn btn-sm" style={{ background: 'rgba(76,175,80,0.15)', color: '#4CAF50', border: '1px solid rgba(76,175,80,0.3)', cursor: 'default' }} title="Enviado">
+                              <LuCheck size={13} />
+                            </button>
                           )}
                           {isMobile ? (
                             <button className="btn btn-outline-gold btn-sm" onClick={() => handleSharePdf(r.id, r.client?.full_name, r.month, r.year)} title="Compartilhar PDF">

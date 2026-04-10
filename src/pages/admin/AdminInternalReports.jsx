@@ -3,16 +3,22 @@ import { Card, Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import { LuPlus, LuTrash2, LuSearch, LuDownload, LuTriangleAlert } from 'react-icons/lu';
 import api from '../../services/api';
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatCurrency = (v) => 'US$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const monthNames = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const monthAbbr = ['', 'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
 const PROFIT_TARGET = 5;
 
 function profitColor(pct) {
   const n = Number(pct);
   if (n < 0) return '#e07060';
-  if (n < PROFIT_TARGET) return '#e0a830';
-  return null; // default gold
+  if (n >= PROFIT_TARGET) return '#00b3b3';
+  if (n > 0) return '#e0a830';
+  return null;
+}
+
+function valueColor(v) {
+  return Number(v) < 0 ? '#e07060' : undefined;
 }
 
 export default function AdminInternalReports() {
@@ -104,7 +110,6 @@ export default function AdminInternalReports() {
     return true;
   });
 
-  // Totais dos selecionados
   const selectedItems = filtered.filter(r => selected.has(r.id));
   const totalUpdatedValue = selectedItems.reduce((s, r) => s + Number(r.updated_value || 0), 0);
   const totalProfitPct = selectedItems.length > 0
@@ -112,6 +117,8 @@ export default function AdminInternalReports() {
     : 0;
 
   const years = [...new Set(items.map(r => r.year))].sort((a, b) => b - a);
+
+  const tdStyle = { padding: '0.5rem' };
 
   return (
     <div className="page-container">
@@ -140,7 +147,7 @@ export default function AdminInternalReports() {
           <div className="d-flex gap-2">
             <button className="btn btn-sm btn-outline-gold d-flex align-items-center gap-1" onClick={handleBatchPdf}>
               <LuDownload size={13} />
-              Gerar PDF ({selected.size})
+              PDF ({selected.size})
             </button>
             <button className="btn btn-sm btn-outline-danger-custom d-flex align-items-center gap-1" onClick={handleDeleteSelected} disabled={deleting}>
               <LuTrash2 size={13} />
@@ -153,7 +160,7 @@ export default function AdminInternalReports() {
       {selected.size > 0 && (
         <div className="d-flex gap-3 mb-3">
           <div className="px-3 py-2" style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <span className="text-stone" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Total Valor Atualizado</span>
+            <span className="text-stone" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Total V. Atualizado</span>
             <div className="text-petrol fw-semibold">{formatCurrency(totalUpdatedValue)}</div>
           </div>
           <div className="px-3 py-2" style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
@@ -172,18 +179,20 @@ export default function AdminInternalReports() {
               <Table className="table-dark table-hover align-middle responsive-table mb-0">
                 <thead>
                   <tr>
-                    <th style={{ width: 40 }}>
+                    <th style={{ width: 40, padding: '0.5rem' }}>
                       <input type="checkbox" className="form-check-input bulk-checkbox" checked={filtered.length > 0 && selected.size === filtered.length} onChange={toggleSelectAll} />
                     </th>
-                    <th>Colaborador</th>
-                    <th>Período</th>
-                    <th>Valor Inicial</th>
-                    <th>Valor Atualizado</th>
-                    <th>Lucro</th>
-                    <th>Lucro %</th>
-                    <th>Comissão</th>
-                    <th>Próx. Mês</th>
-                    <th>Ações</th>
+                    <th style={tdStyle}>Colaborador</th>
+                    <th style={tdStyle}>Período</th>
+                    <th style={tdStyle}>V. Inicial</th>
+                    <th style={tdStyle}>V. Atualizado</th>
+                    <th style={tdStyle}>Lucro</th>
+                    <th style={tdStyle}>Lucro %</th>
+                    <th style={tdStyle}>L. Total</th>
+                    <th style={tdStyle}>L. Total %</th>
+                    <th style={tdStyle}>Comissão</th>
+                    <th style={tdStyle}>Próx. Mês</th>
+                    <th style={tdStyle}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -191,27 +200,39 @@ export default function AdminInternalReports() {
                     const pct = Number(r.profit_percentage);
                     const pctColor = profitColor(pct);
                     const belowTarget = pct >= 0 && pct < PROFIT_TARGET;
+                    const totalProfit = Number(r.updated_value || 0) - Number(r.total_deposits || 0);
+                    const totalDeposits = Number(r.total_deposits || 0);
+                    const totalProfitPctRow = totalDeposits > 0 ? (totalProfit / totalDeposits) * 100 : 0;
+                    const totalProfitColor = profitColor(totalProfitPctRow);
                     return (
                       <tr key={r.id} className={selected.has(r.id) ? 'row-selected' : ''}>
-                        <td>
+                        <td style={tdStyle}>
                           <input type="checkbox" className="form-check-input bulk-checkbox" checked={selected.has(r.id)} onChange={() => toggleSelect(r.id)} />
                         </td>
-                        <td data-label="Colaborador" className="text-white fw-medium">{r.collaborator?.name}</td>
-                        <td data-label="Período"><span className="badge-gold">{monthNames[r.month]} / {r.year}</span></td>
-                        <td data-label="Valor Inicial" className="text-petrol fw-medium">{formatCurrency(r.initial_value)}</td>
-                        <td data-label="Valor Atualizado" className="text-white fw-medium">{formatCurrency(r.updated_value)}</td>
-                        <td data-label="Lucro" className={Number(r.profit) >= 0 ? 'text-petrol fw-semibold' : 'fw-semibold'} style={Number(r.profit) < 0 ? { color: '#e07060' } : {}}>
+                        <td data-label="Colaborador" className="text-white fw-medium" style={tdStyle}>{r.collaborator?.name}</td>
+                        <td data-label="Período" style={tdStyle}><span className="badge-gold">{monthAbbr[r.month]}/{r.year}</span></td>
+                        <td data-label="V. Inicial" className="fw-medium" style={{ ...tdStyle, color: valueColor(r.initial_value) || '#00b3b3' }}>{formatCurrency(r.initial_value)}</td>
+                        <td data-label="V. Atualizado" className="fw-medium" style={{ ...tdStyle, color: valueColor(r.updated_value) || '#fff' }}>{formatCurrency(r.updated_value)}</td>
+                        <td data-label="Lucro" className="fw-semibold" style={{ ...tdStyle, color: valueColor(r.profit) || '#00b3b3' }}>
                           {formatCurrency(r.profit)}
                         </td>
-                        <td data-label="Lucro %">
+                        <td data-label="Lucro %" style={tdStyle}>
                           <span className="fw-semibold d-inline-flex align-items-center gap-1" style={{ color: pctColor || 'var(--gold)' }}>
                             {pct.toFixed(2)}%
                             {belowTarget && <LuTriangleAlert size={12} style={{ color: '#e0a830' }} title={`Abaixo da meta de ${PROFIT_TARGET}%`} />}
                           </span>
                         </td>
-                        <td data-label="Comissão" className="text-gold fw-medium">{formatCurrency(r.commission_value)}</td>
-                        <td data-label="Próx. Mês" className="text-petrol fw-medium">{formatCurrency(r.next_month_initial)}</td>
-                        <td data-label="Ações" className="td-actions">
+                        <td data-label="L. Total" className="fw-semibold" style={{ ...tdStyle, color: valueColor(totalProfit) || '#00b3b3' }}>
+                          {formatCurrency(totalProfit)}
+                        </td>
+                        <td data-label="L. Total %" style={tdStyle}>
+                          <span className="fw-semibold" style={{ color: totalProfitColor || 'var(--gold)' }}>
+                            {totalProfitPctRow.toFixed(2)}%
+                          </span>
+                        </td>
+                        <td data-label="Comissão" className="text-gold fw-medium" style={tdStyle}>{formatCurrency(r.commission_value)}</td>
+                        <td data-label="Próx. Mês" className="fw-medium" style={{ ...tdStyle, color: valueColor(r.next_month_initial) || '#00b3b3' }}>{formatCurrency(r.next_month_initial)}</td>
+                        <td data-label="Ações" className="td-actions" style={tdStyle}>
                           <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(r.id)}>
                             <LuTrash2 size={13} />
                           </button>

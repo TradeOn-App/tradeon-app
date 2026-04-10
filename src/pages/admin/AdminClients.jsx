@@ -67,8 +67,12 @@ export default function AdminClients() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError('');
+    // Ao editar, não enviar password vazio para evitar validação desnecessária
+    const payload = editing
+      ? Object.fromEntries(Object.entries(form).filter(([k, v]) => k !== 'password' || v))
+      : form;
     const req = editing
-      ? api.put(`/admin/clients/${editing.id}`, form)
+      ? api.put(`/admin/clients/${editing.id}`, payload)
       : api.post('/admin/clients', form);
     req
       .then(() => { setShow(false); load(); })

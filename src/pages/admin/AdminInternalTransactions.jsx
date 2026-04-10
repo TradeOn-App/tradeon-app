@@ -4,8 +4,9 @@ import { LuPlus, LuTrash2, LuSearch, LuPencilLine } from 'react-icons/lu';
 import api from '../../services/api';
 import CurrencyInput from '../../components/CurrencyInput';
 
-const formatCurrency = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const formatUSD = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatCurrency = (v) => 'US$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatUSD = (v) => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatDate = (d) => { if (!d) return '-'; const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; };
 const typeMap = { initial_value: 'Valor Inicial', updated_value: 'Valor Atualizado', deposit: 'Aporte', withdrawal: 'Retirada', commission_withdrawal: 'Saque Comissão', client_withdrawal: 'Saque Cliente' };
 
 const fetchDollarQuotation = async (dateStr) => {
@@ -185,7 +186,7 @@ export default function AdminInternalTransactions() {
         <div className="text-center py-5"><Spinner animation="border" className="spinner-gold" /></div>
       ) : (
         <div className="table-responsive">
-          <Table className="table-dark table-hover align-middle responsive-table">
+          <Table className="table-dark table-hover align-middle responsive-table" style={{ tableLayout: 'fixed', width: '100%' }}>
             <thead>
               <tr>
                 <th style={{ width: 40 }}>
@@ -196,8 +197,8 @@ export default function AdminInternalTransactions() {
                 <th>Valor</th>
                 <th>Moeda</th>
                 <th>Data</th>
-                <th>Cotação USD</th>
-                <th>Hash</th>
+                <th>Cotação</th>
+                <th style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>Hash</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -225,9 +226,9 @@ export default function AdminInternalTransactions() {
                     {formatCurrency(t.amount)}
                   </td>
                   <td data-label="Moeda">{t.currency?.code}</td>
-                  <td data-label="Data">{t.transaction_date}</td>
+                  <td data-label="Data">{formatDate(t.transaction_date)}</td>
                   <td data-label="Cotação USD">{t.quotation_at_transaction ? formatUSD(t.quotation_at_transaction) : '-'}</td>
-                  <td data-label="Hash"><code className="text-stone">{t.tx_hash || '-'}</code></td>
+                  <td data-label="Hash" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><code className="text-stone" title={t.tx_hash || ''}>{t.tx_hash || '-'}</code></td>
                   <td data-label="Ações" className="td-actions">
                     <div className="d-flex gap-1">
                       <button className="btn btn-outline-gold btn-sm" onClick={() => openEdit(t)}><LuPencilLine size={13} /></button>

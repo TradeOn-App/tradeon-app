@@ -255,13 +255,14 @@ export default function AdminDashboard() {
                   : 'Período'}
               </button>
               {showRange && (
-                <div className="date-range-dropdown">
+                <div className="date-range-dropdown" onMouseDown={e => e.stopPropagation()}>
                   <div className="date-range-field">
                     <label className="date-range-label">De</label>
                     <input
                       type="date"
                       className="date-range-input"
                       value={dateFrom}
+                      onFocus={e => e.stopPropagation()}
                       onChange={e => { setDateFrom(e.target.value); setPeriod('custom'); }}
                     />
                   </div>
@@ -271,6 +272,7 @@ export default function AdminDashboard() {
                       type="date"
                       className="date-range-input"
                       value={dateTo}
+                      onFocus={e => e.stopPropagation()}
                       onChange={e => { setDateTo(e.target.value); setPeriod('custom'); }}
                     />
                   </div>
