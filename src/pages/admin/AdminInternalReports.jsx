@@ -200,9 +200,10 @@ export default function AdminInternalReports() {
                     const pct = Number(r.profit_percentage);
                     const pctColor = profitColor(pct);
                     const belowTarget = pct >= 0 && pct < PROFIT_TARGET;
-                    const totalProfit = Number(r.updated_value || 0) - Number(r.total_deposits || 0);
-                    const totalDeposits = Number(r.total_deposits || 0);
-                    const totalProfitPctRow = totalDeposits > 0 ? (totalProfit / totalDeposits) * 100 : 0;
+                    // Lucro Total = Valor Atualizado - Aportes Acumulados (lucro sobre todo o capital investido)
+                    const cumDeposits = Number(r.cumulative_deposits || 0);
+                    const totalProfit = Number(r.updated_value || 0) - cumDeposits;
+                    const totalProfitPctRow = cumDeposits > 0 ? (totalProfit / cumDeposits) * 100 : 0;
                     const totalProfitColor = profitColor(totalProfitPctRow);
                     return (
                       <tr key={r.id} className={selected.has(r.id) ? 'row-selected' : ''}>
