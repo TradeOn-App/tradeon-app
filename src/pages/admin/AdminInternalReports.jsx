@@ -103,6 +103,21 @@ export default function AdminInternalReports() {
       });
   };
 
+  const handleDownloadPdf = (id, name, month, year) => {
+    api.get(`/admin/internal-reports/${id}/pdf`, { responseType: 'blob' })
+      .then(res => {
+        const blob = new Blob([res.data], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Relatorio Interno ${name} - ${month}-${year}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      });
+  };
+
   const filtered = items.filter(r => {
     if (search && !(r.collaborator?.name || '').toLowerCase().includes(search.toLowerCase())) return false;
     if (filterMonth && String(r.month) !== filterMonth) return false;
@@ -234,9 +249,14 @@ export default function AdminInternalReports() {
                         <td data-label="Comissão" className="text-gold fw-medium" style={tdStyle}>{formatCurrency(r.commission_value)}</td>
                         <td data-label="Próx. Mês" className="fw-medium" style={{ ...tdStyle, color: valueColor(r.next_month_initial) || '#00b3b3' }}>{formatCurrency(r.next_month_initial)}</td>
                         <td data-label="Ações" className="td-actions" style={tdStyle}>
-                          <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(r.id)}>
-                            <LuTrash2 size={13} />
-                          </button>
+                          <div className="d-flex gap-1">
+                            <button className="btn btn-outline-gold btn-sm" onClick={() => handleDownloadPdf(r.id, r.collaborator?.name, r.month, r.year)} title="Baixar PDF">
+                              <LuDownload size={13} />
+                            </button>
+                            <button className="btn btn-outline-danger-custom btn-sm" onClick={() => handleDelete(r.id)}>
+                              <LuTrash2 size={13} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

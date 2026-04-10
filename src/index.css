@@ -98,7 +98,7 @@ a:hover {
 }
 
 .sidebar {
-  width: var(--sidebar-width);
+  width: var(--sidebar-current-width, var(--sidebar-width));
   min-height: 100vh;
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -108,6 +108,23 @@ a:hover {
   z-index: 100;
   display: flex;
   flex-direction: column;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+
+.sidebar-collapsed {
+  width: 68px;
+}
+
+.sidebar-collapsed .sidebar-link {
+  justify-content: center;
+  padding: 0.65rem 0;
+  margin: 1px 0.3rem;
+}
+
+.sidebar-collapsed .sidebar-brand {
+  padding: 1.25rem 0.5rem;
+  text-align: center;
 }
 
 .sidebar::after {
@@ -258,9 +275,10 @@ a:hover {
 
 .app-content {
   flex: 1;
-  margin-left: var(--sidebar-width);
+  margin-left: var(--sidebar-current-width, var(--sidebar-width));
   min-height: 100vh;
   background: var(--bg);
+  transition: margin-left 0.25s ease;
 }
 
 .page-container {
